@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "paths": {
+      "planner-core": ["./src/index.ts"]
+    }
+  },
+  "include": ["src", "tests", "../../fixtures"]
+}
