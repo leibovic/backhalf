@@ -8,7 +8,24 @@
       "Bash(pnpm --filter planner-core test)",
       "Bash(pnpm build *)",
       "Bash(pnpm dev *)",
-      "Bash(curl -s http://localhost:3000)"
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(rm -rf /Users/margaret/Code/backhalf/apps/web/.git)",
+      "Bash(git rm *)",
+      "Bash(git add *)",
+      "Bash(npm install *)",
+      "Bash(vercel --version)",
+      "Bash(vercel --yes)",
+      "Bash(vercel project *)",
+      "Bash(vercel inspect *)",
+      "Read(//Users/margaret/.local/share/com.vercel.cli/**)",
+      "Read(//Users/margaret/.config/vercel/**)",
+      "Read(//Users/margaret/.config/**)",
+      "Read(//Users/margaret/**)",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s 'https://api.vercel.com/v3/deployments/backhalf-nbooyd6k0-margaretleibovic-8932s-projects.vercel.app/events?builds=1&limit=300' -H 'Authorization: Bearer vca_4DSNnyBTwRAqm3l2y4v2necRnzGpUxln91ucUTcJLPLJQLeubR1Nhbtz')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('rootDir:', d.get\\('rootDirectory'\\), '| build:', d.get\\('buildCommand'\\), '| install:', d.get\\('installCommand'\\), '| output:', d.get\\('outputDirectory'\\)\\)\")",
+      "Bash(vercel --yes --prod)",
+      "Bash(curl -sI https://backhalf-gz9wfsdp2-margaretleibovic-8932s-projects.vercel.app)"
     ]
   }
 }
