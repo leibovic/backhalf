@@ -1,273 +1,240 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { usePlanStore } from "@/stores/planStore";
-import { NavBar } from "@/components/NavBar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import type { Product } from "planner-core";
+import { usePlanStore } from "@/stores/planStore";
+import { AppHeader } from "@/components/design/Shell";
+import {
+  Btn,
+  Card,
+  Input,
+  NumberInput,
+  SectionHeader,
+} from "@/components/design/Primitives";
+import { Icon } from "@/components/design/Icon";
 
 const PRODUCT_TYPES: Product["type"][] = [
-  "drink_mix",
   "gel",
+  "drink_mix",
   "bar",
   "candy",
-  "water",
   "tablet",
+  "water",
   "real_food",
 ];
 
 const TYPE_LABELS: Record<Product["type"], string> = {
-  drink_mix: "Drink Mix",
-  gel: "Gel",
-  bar: "Bar",
-  candy: "Candy",
-  water: "Water",
-  tablet: "Tablet",
-  real_food: "Real Food",
+  drink_mix: "drink mix",
+  gel: "gel",
+  bar: "bar",
+  candy: "candy",
+  water: "water",
+  tablet: "tablet",
+  real_food: "real food",
 };
-
-function emptyProduct(): Product {
-  return {
-    id: `product-${Date.now()}`,
-    name: "",
-    type: "gel",
-    servingDescription: "1 serving",
-    servingFluidMl: 0,
-    carbsG: 0,
-    sodiumMg: 0,
-    caffeineMg: 0,
-  };
-}
 
 export function ProductsClient() {
   const router = useRouter();
-  const { activePlan, initFromStorage, addProduct, updateProduct, removeProduct } =
-    usePlanStore();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<Product | null>(null);
-  const [draft, setDraft] = useState<Product>(emptyProduct());
-
-  useEffect(() => {
-    initFromStorage();
-  }, [initFromStorage]);
+  const { activePlan, addProduct, updateProduct, removeProduct } = usePlanStore();
 
   if (!activePlan) {
     return (
-      <div className="min-h-screen bg-background">
-        <NavBar />
-        <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-          <p className="text-muted-foreground mb-4">No plan selected.</p>
-          <Button onClick={() => router.push("/")}>Go to Plans</Button>
+      <>
+        <AppHeader title="Products" breadcrumbs={["Library", "Products"]} />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center", color: "var(--fg-secondary)" }}>
+            <p style={{ marginBottom: 16 }}>No race plan selected.</p>
+            <Btn variant="primary" onClick={() => router.push("/")}>
+              Go to Races
+            </Btn>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
-  function openNew() {
-    const p = emptyProduct();
-    setDraft(p);
-    setEditing(null);
-    setDialogOpen(true);
+  function handleAdd() {
+    const id = `custom-${Date.now()}`;
+    addProduct({
+      id,
+      name: "New product",
+      type: "gel",
+      servingDescription: "1 serving",
+      servingFluidMl: 0,
+      carbsG: 25,
+      sodiumMg: 0,
+      caffeineMg: 0,
+    });
   }
 
-  function openEdit(product: Product) {
-    setDraft({ ...product });
-    setEditing(product);
-    setDialogOpen(true);
-  }
+  const tableHeader: import("react").CSSProperties = {
+    textAlign: "left",
+    padding: "10px 12px",
+    fontFamily: "var(--font-mono)",
+    fontSize: 10,
+    color: "var(--fg-tertiary)",
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    fontWeight: 500,
+  };
 
-  function handleSave() {
-    if (!draft.name.trim()) return;
-    if (editing) {
-      updateProduct(draft);
-    } else {
-      addProduct(draft);
-    }
-    setDialogOpen(false);
-  }
-
-  function setField<K extends keyof Product>(key: K, value: Product[K]) {
-    setDraft((d) => ({ ...d, [key]: value }));
-  }
+  const selectStyle: import("react").CSSProperties = {
+    fontFamily: "var(--font-mono)",
+    fontSize: 12,
+    background: "var(--bg-inset)",
+    color: "var(--fg-primary)",
+    border: "1px solid var(--border)",
+    borderRadius: 2,
+    padding: "6px 8px",
+    outline: "none",
+    width: "100%",
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <NavBar raceName={activePlan.goal.raceName} />
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-semibold">Products Library</h1>
-          <Button onClick={openNew}>Add Product</Button>
-        </div>
+    <>
+      <AppHeader
+        title="Products"
+        subtitle={activePlan.goal.raceName}
+        breadcrumbs={["Library", "Products"]}
+      />
+      <div className="app-scroll" style={{ flex: 1, overflowY: "auto" }}>
+        <div style={{ padding: "24px 28px 60px", maxWidth: 1200, margin: "0 auto" }}>
+          <SectionHeader
+            title="Product library"
+            subtitle="Real fuel from the real world. Used across all your race plans."
+            right={
+              <Btn variant="primary" onClick={handleAdd}>
+                <Icon name="plus" size={13} color="#fff" />
+                Add product
+              </Btn>
+            }
+          />
 
-        {activePlan.products.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <p className="mb-4">No products yet. Add the nutrition products you carry.</p>
-            <Button onClick={openNew}>Add Product</Button>
-          </div>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {activePlan.products.map((product) => (
-              <Card key={product.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <CardTitle className="text-sm">{product.name}</CardTitle>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {product.servingDescription}
-                      </p>
-                    </div>
-                    <Badge variant="secondary" className="shrink-0">
-                      {TYPE_LABELS[product.type]}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-4 text-xs text-muted-foreground mb-3">
-                    {product.servingFluidMl > 0 && (
-                      <span>{product.servingFluidMl} mL</span>
-                    )}
-                    <span>{product.carbsG}g carbs</span>
-                    <span>{product.sodiumMg}mg sodium</span>
-                    {product.caffeineMg > 0 && (
-                      <span>{product.caffeineMg}mg caffeine</span>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => openEdit(product)}>
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive"
-                      onClick={() => {
-                        if (confirm(`Remove "${product.name}"?`)) removeProduct(product.id);
-                      }}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Name</Label>
-              <Input
-                value={draft.name}
-                onChange={(e) => setField("name", e.target.value)}
-                placeholder="e.g. SiS Beta Fuel Gel"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Type</Label>
-                <Select
-                  value={draft.type}
-                  onValueChange={(v) => setField("type", v as Product["type"])}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRODUCT_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {TYPE_LABELS[t]}
-                      </SelectItem>
+          <Card padding={0}>
+            <div style={{ overflowX: "auto" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                }}
+              >
+                <thead>
+                  <tr
+                    style={{
+                      borderBottom: "1px solid var(--border-strong)",
+                      background: "var(--bg-inset)",
+                    }}
+                  >
+                    {[
+                      "Product",
+                      "Type",
+                      "Serving",
+                      "Fluid (mL)",
+                      "Carbs (g)",
+                      "Sodium (mg)",
+                      "Caffeine (mg)",
+                      "",
+                    ].map((h) => (
+                      <th key={h} style={tableHeader}>
+                        {h}
+                      </th>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Serving Description</Label>
-                <Input
-                  value={draft.servingDescription}
-                  onChange={(e) => setField("servingDescription", e.target.value)}
-                  placeholder="1 gel"
-                />
-              </div>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activePlan.products.map((p) => (
+                    <tr key={p.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                      <td style={{ padding: "8px 12px", minWidth: 200 }}>
+                        <Input
+                          value={p.name}
+                          onChange={(e) => updateProduct({ ...p, name: e.target.value })}
+                          style={{
+                            background: "transparent",
+                            border: "1px solid transparent",
+                          }}
+                        />
+                      </td>
+                      <td style={{ padding: "8px 12px" }}>
+                        <select
+                          value={p.type}
+                          onChange={(e) =>
+                            updateProduct({ ...p, type: e.target.value as Product["type"] })
+                          }
+                          style={selectStyle}
+                        >
+                          {PRODUCT_TYPES.map((t) => (
+                            <option key={t} value={t}>
+                              {TYPE_LABELS[t]}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td style={{ padding: "8px 12px", minWidth: 140 }}>
+                        <Input
+                          value={p.servingDescription}
+                          onChange={(e) =>
+                            updateProduct({ ...p, servingDescription: e.target.value })
+                          }
+                          style={{
+                            background: "transparent",
+                            border: "1px solid transparent",
+                          }}
+                        />
+                      </td>
+                      <td style={{ padding: "8px 12px", width: 100 }}>
+                        <NumberInput
+                          value={p.servingFluidMl}
+                          step={50}
+                          min={0}
+                          onChange={(v) => updateProduct({ ...p, servingFluidMl: v })}
+                        />
+                      </td>
+                      <td style={{ padding: "8px 12px", width: 100 }}>
+                        <NumberInput
+                          value={p.carbsG}
+                          step={1}
+                          min={0}
+                          onChange={(v) => updateProduct({ ...p, carbsG: v })}
+                        />
+                      </td>
+                      <td style={{ padding: "8px 12px", width: 100 }}>
+                        <NumberInput
+                          value={p.sodiumMg}
+                          step={10}
+                          min={0}
+                          onChange={(v) => updateProduct({ ...p, sodiumMg: v })}
+                        />
+                      </td>
+                      <td style={{ padding: "8px 12px", width: 100 }}>
+                        <NumberInput
+                          value={p.caffeineMg}
+                          step={5}
+                          min={0}
+                          onChange={(v) => updateProduct({ ...p, caffeineMg: v })}
+                        />
+                      </td>
+                      <td style={{ padding: "8px 12px", width: 50 }}>
+                        <Btn
+                          variant="bare"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm(`Remove "${p.name}"?`)) removeProduct(p.id);
+                          }}
+                          title="Delete"
+                        >
+                          <Icon name="trash" size={11} color="var(--fg-tertiary)" />
+                        </Btn>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Fluid (mL)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={draft.servingFluidMl}
-                  onChange={(e) =>
-                    setField("servingFluidMl", parseFloat(e.target.value) || 0)
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Carbs (g)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={draft.carbsG}
-                  onChange={(e) => setField("carbsG", parseFloat(e.target.value) || 0)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Sodium (mg)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={draft.sodiumMg}
-                  onChange={(e) => setField("sodiumMg", parseFloat(e.target.value) || 0)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Caffeine (mg)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={draft.caffeineMg}
-                  onChange={(e) =>
-                    setField("caffeineMg", parseFloat(e.target.value) || 0)
-                  }
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={!draft.name.trim()}>
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </Card>
+        </div>
+      </div>
+    </>
   );
 }

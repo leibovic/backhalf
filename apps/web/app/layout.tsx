@@ -1,20 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bebas_Neue, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { Shell } from "@/components/design/Shell";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const bebas = Bebas_Neue({
+  variable: "--font-bebas",
+  weight: "400",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  weight: ["300", "400", "500", "600"],
+  subsets: ["latin"],
+});
+
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
+  weight: ["300", "400", "500", "600"],
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Backhalf — Ultra Race Planner",
-  description: "Plan your ultra race splits, nutrition, and pack contents.",
+  title: "Backhalf — Race Planner",
+  description: "Plan your ultra race splits, fuel, and pacing.",
 };
 
 export default function RootLayout({
@@ -23,8 +32,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
-      <body className="min-h-full bg-background text-foreground antialiased">{children}</body>
+    <html
+      lang="en"
+      className={`${bebas.variable} ${plexMono.variable} ${plexSans.variable}`}
+      style={{ height: "100%" }}
+    >
+      <body style={{ minHeight: "100%", height: "100%" }}>
+        <Shell>{children}</Shell>
+      </body>
     </html>
   );
 }

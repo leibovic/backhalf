@@ -26,7 +26,18 @@
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('rootDir:', d.get\\('rootDirectory'\\), '| build:', d.get\\('buildCommand'\\), '| install:', d.get\\('installCommand'\\), '| output:', d.get\\('outputDirectory'\\)\\)\")",
       "Bash(vercel --yes --prod)",
       "Bash(curl -sI https://backhalf-gz9wfsdp2-margaretleibovic-8932s-projects.vercel.app)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(gh auth *)",
+      "Bash(brew install *)",
+      "Bash(curl -sL \"https://api.anthropic.com/v1/design/h/lQnMbPnpfyZWdfLE_CrDcw\" -o /tmp/design-response.txt -w \"HTTP %{http_code}\\\\nContent-Type: %{content_type}\\\\nFinal URL: %{url_effective}\\\\nSize: %{size_download} bytes\\\\n\")",
+      "Read(//tmp/**)",
+      "Bash(mkdir -p /tmp/design-files)",
+      "Bash(gunzip -c /tmp/design-response.txt)",
+      "Read(//private/tmp/design-files/**)",
+      "Bash(tar -xf extracted)",
+      "Bash(cp /tmp/design-files/backhalf-app/project/design-system/topo-texture.svg /Users/margaret/Code/backhalf/apps/web/public/design/)",
+      "Bash(cp /tmp/design-files/backhalf-app/project/design-system/logo.svg /Users/margaret/Code/backhalf/apps/web/public/design/)",
+      "Bash(cp /tmp/design-files/backhalf-app/project/design-system/logo-mark.svg /Users/margaret/Code/backhalf/apps/web/public/design/)"
     ]
   }
 }

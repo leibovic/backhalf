@@ -1,21 +1,17 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePlanStore } from "@/stores/planStore";
-import { NavBar } from "@/components/NavBar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { exportPlans, importPlans, clearAllData } from "@/lib/storage";
+import { AppHeader } from "@/components/design/Shell";
+import { Btn, Card, SectionHeader } from "@/components/design/Primitives";
+import { Icon } from "@/components/design/Icon";
 
 export function SettingsClient() {
   const router = useRouter();
   const { initFromStorage } = usePlanStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    initFromStorage();
-  }, [initFromStorage]);
 
   function handleExport() {
     exportPlans();
@@ -50,66 +46,85 @@ export function SettingsClient() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <NavBar />
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-semibold mb-6">Settings</h1>
+    <>
+      <AppHeader title="Settings" breadcrumbs={["Settings"]} />
+      <div className="app-scroll" style={{ flex: 1, overflowY: "auto" }}>
+        <div style={{ padding: "24px 28px 60px", maxWidth: 700, margin: "0 auto" }}>
+          <SectionHeader title="Settings" subtitle="Manage your stored data." />
 
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Backup & Restore</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Plans are stored in your browser&apos;s local storage. Export a backup to
-                  keep them safe or transfer to another device.
-                </p>
-                <div className="flex gap-3">
-                  <Button onClick={handleExport}>Export JSON</Button>
-                  <Button variant="outline" onClick={handleImportClick}>
-                    Import JSON
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".json"
-                    className="hidden"
-                    onChange={handleImportFile}
-                  />
-                </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Card>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <Icon name="download" size={14} color="var(--accent)" />
+                <h5 style={{ margin: 0 }}>Backup & restore</h5>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Danger Zone</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-3">
-                Permanently delete all plans from local storage.
+              <p
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 13,
+                  color: "var(--fg-secondary)",
+                  marginBottom: 14,
+                  lineHeight: 1.6,
+                }}
+              >
+                Plans are stored in your browser&apos;s local storage. Export a backup to keep
+                them safe or transfer between devices.
               </p>
-              <Button variant="destructive" onClick={handleClearAll}>
-                Clear All Data
-              </Button>
-            </CardContent>
-          </Card>
+              <div style={{ display: "flex", gap: 10 }}>
+                <Btn variant="primary" onClick={handleExport}>
+                  <Icon name="download" size={12} color="#fff" />
+                  Export JSON
+                </Btn>
+                <Btn variant="ghost" onClick={handleImportClick}>
+                  <Icon name="upload" size={12} />
+                  Import JSON
+                </Btn>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  style={{ display: "none" }}
+                  onChange={handleImportFile}
+                />
+              </div>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>About</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Backhalf v1 — Ultra Race Planner. Plans are stored locally in your browser.
-                No accounts, no server, no data leaves your device.
+            <Card>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <Icon name="trash" size={14} color="var(--danger)" />
+                <h5 style={{ margin: 0, color: "var(--danger)" }}>Danger zone</h5>
+              </div>
+              <p
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 13,
+                  color: "var(--fg-secondary)",
+                  marginBottom: 14,
+                  lineHeight: 1.6,
+                }}
+              >
+                Permanently delete all plans from local storage. There&apos;s no undo.
               </p>
-            </CardContent>
-          </Card>
+              <Btn variant="danger" onClick={handleClearAll}>
+                Clear all data
+              </Btn>
+            </Card>
+          </div>
+
+          <div
+            style={{
+              marginTop: 22,
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--fg-tertiary)",
+              letterSpacing: "0.04em",
+            }}
+          >
+            Backhalf v0.1 · all data lives in your browser · pace model: flat-equivalent +
+            per-meter elevation cost.
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  
+  <rect width="64" height="64" fill="#1a1a16"></rect>
+  <rect x="0" y="60" width="64" height="4" fill="#e8621a"></rect>
+  
+  <text x="4" y="52" font-family="&#39;Bebas Neue&#39;, &#39;Arial Narrow&#39;, Impact, sans-serif" font-size="52" fill="#f0ede4">BH</text>
+</svg>
