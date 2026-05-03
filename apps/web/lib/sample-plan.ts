@@ -56,8 +56,8 @@ export const samplePlan: Plan = {
   runner: {
     id: "default-runner",
     name: "Runner",
-    secPerMeterClimb: 6,
-    secPerMeterDescent: 2,
+    secPerMeterClimb: 2,
+    secPerMeterDescent: 1,
     fluidMlPerHour: 600,
     sodiumMgPerHour: 700,
     carbsGPerHour: 80,

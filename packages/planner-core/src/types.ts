@@ -47,9 +47,11 @@ export interface Product {
 export interface RunnerProfile {
   id: string;
   name: string;
-  // Pace model knobs
-  secPerMeterClimb: number; // default 6 (trail running)
-  secPerMeterDescent: number; // default 2 (capped so segment >= 70% of flat time)
+  // Pace model knobs.
+  // Cost added per meter of gain / benefit per meter of loss vs. flat pace.
+  // Defaults assume a moderate runnable trail; tune up for steep mountain courses.
+  secPerMeterClimb: number; // default 2 (rolling singletrack); 4–6 for steep mountain ascents
+  secPerMeterDescent: number; // default 1 (runnable); capped so a segment can't go below 70% of flat time
   // Hourly hydration/fueling targets
   fluidMlPerHour: number;
   sodiumMgPerHour: number;

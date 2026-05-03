@@ -24,8 +24,10 @@ describe("Sulphur Springs 100K pace model", () => {
     sulphurSprings100kGoal
   );
 
-  it("derives baseline flat pace near 284 sec/km (~4:44/km)", () => {
-    expect(paceResult.baselinePaceSecPerKm).toBeCloseTo(284, 0);
+  it("derives baseline flat pace near 339 sec/km (~5:39/km)", () => {
+    // Sulphur Springs: 1825m gain, 1825m loss over 100km. With climb=2/descent=1:
+    // cost = 1825*2 - 1825*1 = 1825 sec; baseline = (35700 - 1825) / 100 = 338.75 sec/km
+    expect(paceResult.baselinePaceSecPerKm).toBeCloseTo(339, 0);
   });
 
   it("predicts per-loop time near 1:59:00 (7140s)", () => {

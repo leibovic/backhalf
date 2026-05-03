@@ -122,6 +122,11 @@ export function TargetsTab() {
       <Card>
         <CardHeader>
           <CardTitle>Pace Model</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Tunes how much elevation slows you down or speeds you up vs. flat pace. The Race Plan
+            view shows a derived &quot;baseline flat pace&quot; you can sanity-check against your
+            actual flat-running ability.
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -133,7 +138,11 @@ export function TargetsTab() {
                 value={runner.secPerMeterClimb}
                 onChange={(e) => setRunnerNum("secPerMeterClimb", e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">Default 6 (trail running)</p>
+              <p className="text-xs text-muted-foreground">
+                <strong>1</strong> flat road · <strong>2</strong> rolling singletrack ·{" "}
+                <strong>4</strong> steep technical climbs ·{" "}
+                <strong>6</strong> mountain ascents you&apos;ll power-hike
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label>Descent Benefit (sec/meter loss)</Label>
@@ -143,7 +152,10 @@ export function TargetsTab() {
                 value={runner.secPerMeterDescent}
                 onChange={(e) => setRunnerNum("secPerMeterDescent", e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">Default 2 (capped at 70% of flat time)</p>
+              <p className="text-xs text-muted-foreground">
+                <strong>0</strong> technical descent (no time gained) · <strong>1</strong> runnable
+                descent · <strong>2</strong> smooth, fast descent
+              </p>
             </div>
           </div>
         </CardContent>
