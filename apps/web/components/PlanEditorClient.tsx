@@ -6,8 +6,7 @@ import { usePlanStore } from "@/stores/planStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NavBar } from "@/components/NavBar";
 import { CourseTab } from "@/components/editor/CourseTab";
-import { RunnerTab } from "@/components/editor/RunnerTab";
-import { GoalTab } from "@/components/editor/GoalTab";
+import { TargetsTab } from "@/components/editor/TargetsTab";
 import { LoadoutsTab } from "@/components/editor/LoadoutsTab";
 import { Button } from "@/components/ui/button";
 
@@ -44,20 +43,16 @@ export function PlanEditorClient() {
         <Tabs defaultValue="course">
           <TabsList className="mb-6">
             <TabsTrigger value="course">Course</TabsTrigger>
-            <TabsTrigger value="runner">Runner</TabsTrigger>
-            <TabsTrigger value="goal">Goal</TabsTrigger>
-            <TabsTrigger value="loadouts">Loadouts</TabsTrigger>
+            <TabsTrigger value="targets">Targets</TabsTrigger>
+            <TabsTrigger value="fuel">Fuel</TabsTrigger>
           </TabsList>
           <TabsContent value="course">
             <CourseTab />
           </TabsContent>
-          <TabsContent value="runner">
-            <RunnerTab />
+          <TabsContent value="targets">
+            <TargetsTab />
           </TabsContent>
-          <TabsContent value="goal">
-            <GoalTab />
-          </TabsContent>
-          <TabsContent value="loadouts">
+          <TabsContent value="fuel">
             <LoadoutsTab />
           </TabsContent>
         </Tabs>

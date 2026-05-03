@@ -26,8 +26,15 @@ function newAidStation(distanceMOnLoop: number): AidStation {
 }
 
 export function CourseTab() {
-  const { activePlan, updateCourse, addAidStation, updateAidStation, removeAidStation, updateSegments } =
-    usePlanStore();
+  const {
+    activePlan,
+    updateCourse,
+    updateGoal,
+    addAidStation,
+    updateAidStation,
+    removeAidStation,
+    updateSegments,
+  } = usePlanStore();
   const [elevProfile, setElevProfile] = useState<ElevationPoint[]>([]);
   const [gpxError, setGpxError] = useState<string | null>(null);
 
@@ -114,6 +121,61 @@ export function CourseTab() {
 
   return (
     <div className="space-y-6">
+      {/* Race details */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Race Details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Race Name</Label>
+              <Input
+                value={activePlan.goal.raceName}
+                onChange={(e) =>
+                  updateGoal({ ...activePlan.goal, raceName: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Race Date</Label>
+              <Input
+                type="date"
+                value={activePlan.goal.raceDate}
+                onChange={(e) =>
+                  updateGoal({ ...activePlan.goal, raceDate: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Start Time</Label>
+              <Input
+                type="time"
+                value={activePlan.goal.startTime}
+                onChange={(e) =>
+                  updateGoal({ ...activePlan.goal, startTime: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Number of Loops</Label>
+              <Input
+                type="number"
+                min="1"
+                max="20"
+                value={activePlan.goal.loopCount}
+                onChange={(e) =>
+                  updateGoal({
+                    ...activePlan.goal,
+                    loopCount: parseInt(e.target.value) || 1,
+                  })
+                }
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Course basics */}
       <Card>
         <CardHeader>
