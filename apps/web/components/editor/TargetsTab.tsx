@@ -5,17 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-function secToHHMM(sec: number): string {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
-
-function hhmmToSec(hhmm: string): number {
-  const [h, m] = hhmm.split(":").map(Number);
-  return (h ?? 0) * 3600 + (m ?? 0) * 60;
-}
-
 export function TargetsTab() {
   const { activePlan, updateRunner, updateGoal } = usePlanStore();
   if (!activePlan) return null;
@@ -26,6 +15,15 @@ export function TargetsTab() {
     updateRunner({ ...runner, [key]: isNaN(num) ? runner[key] : num });
   }
 
+  const goalHours = Math.floor(goal.goalFinishTimeSec / 3600);
+  const goalMinutes = Math.floor((goal.goalFinishTimeSec % 3600) / 60);
+
+  function setGoalDuration(hours: number, minutes: number) {
+    const safeH = Math.max(0, Math.min(99, isNaN(hours) ? 0 : hours));
+    const safeM = Math.max(0, Math.min(59, isNaN(minutes) ? 0 : minutes));
+    updateGoal({ ...goal, goalFinishTimeSec: safeH * 3600 + safeM * 60 });
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -34,17 +32,31 @@ export function TargetsTab() {
         </CardHeader>
         <CardContent>
           <div className="space-y-1.5 max-w-xs">
-            <Label>Goal Finish Time (HH:MM)</Label>
-            <Input
-              type="time"
-              step="60"
-              value={secToHHMM(goal.goalFinishTimeSec)}
-              onChange={(e) =>
-                updateGoal({ ...goal, goalFinishTimeSec: hhmmToSec(e.target.value) })
-              }
-            />
+            <Label>Total elapsed time from start to finish</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min="0"
+                max="99"
+                value={goalHours}
+                onChange={(e) => setGoalDuration(parseInt(e.target.value), goalMinutes)}
+                className="w-20"
+                aria-label="Hours"
+              />
+              <span className="text-sm text-muted-foreground">hr</span>
+              <Input
+                type="number"
+                min="0"
+                max="59"
+                value={goalMinutes}
+                onChange={(e) => setGoalDuration(goalHours, parseInt(e.target.value))}
+                className="w-20"
+                aria-label="Minutes"
+              />
+              <span className="text-sm text-muted-foreground">min</span>
+            </div>
             <p className="text-xs text-muted-foreground">
-              Total elapsed time from start to finish (e.g. 09:55 for a sub-10h goal)
+              e.g. 9 hr 55 min for a sub-10h goal
             </p>
           </div>
         </CardContent>
