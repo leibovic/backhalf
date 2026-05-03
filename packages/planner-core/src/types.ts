@@ -35,7 +35,7 @@ export interface Segment {
 export interface Product {
   id: string;
   name: string;
-  type: "drink_mix" | "gel" | "bar" | "candy" | "water" | "real_food";
+  type: "drink_mix" | "gel" | "bar" | "candy" | "water" | "tablet" | "real_food";
   servingDescription: string; // human-readable, e.g. "500mL flask", "1 gel"
   servingFluidMl: number;
   carbsG: number;

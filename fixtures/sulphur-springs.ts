@@ -153,6 +153,16 @@ export const sulphurSpringsProducts: Product[] = [
     sodiumMg: 0,
     caffeineMg: 0,
   },
+  {
+    id: "saltstick-caps",
+    name: "SaltStick Salt Tablets",
+    type: "tablet",
+    servingDescription: "1 capsule",
+    servingFluidMl: 0,
+    carbsG: 0,
+    sodiumMg: 215,
+    caffeineMg: 0,
+  },
 ];
 
 export const sulphurSprings100kPlan: Plan = {

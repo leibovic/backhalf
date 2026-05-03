@@ -152,6 +152,16 @@ export const samplePlan: Plan = {
       sodiumMg: 0,
       caffeineMg: 0,
     },
+    {
+      id: "saltstick-caps",
+      name: "SaltStick Salt Tablets",
+      type: "tablet",
+      servingDescription: "1 capsule",
+      servingFluidMl: 0,
+      carbsG: 0,
+      sodiumMg: 215,
+      caffeineMg: 0,
+    },
   ],
   // Sample loadouts: a 1:59 loop needs ~1180mL fluid, ~157g carbs, ~1376mg sodium.
   // Loops 1–3 use a balanced setup, loops 4–5 add caffeine for the back half.

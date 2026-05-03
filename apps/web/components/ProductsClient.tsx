@@ -31,6 +31,7 @@ const PRODUCT_TYPES: Product["type"][] = [
   "bar",
   "candy",
   "water",
+  "tablet",
   "real_food",
 ];
 
@@ -40,6 +41,7 @@ const TYPE_LABELS: Record<Product["type"], string> = {
   bar: "Bar",
   candy: "Candy",
   water: "Water",
+  tablet: "Tablet",
   real_food: "Real Food",
 };
 
