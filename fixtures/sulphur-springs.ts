@@ -161,6 +161,40 @@ export const sulphurSprings100kPlan: Plan = {
   runner: sulphurSpringsRunner,
   goal: sulphurSprings100kGoal,
   products: sulphurSpringsProducts,
+  loadouts: {
+    "loop-1": [
+      { productId: "skratch-hydration", quantity: 2 },
+      { productId: "skratch-superfuel", quantity: 1 },
+      { productId: "sis-beta-fuel-gel", quantity: 1 },
+      { productId: "carbs-fuel-gel", quantity: 1 },
+    ],
+    "loop-2": [
+      { productId: "skratch-hydration", quantity: 2 },
+      { productId: "skratch-superfuel", quantity: 1 },
+      { productId: "sis-beta-fuel-gel", quantity: 1 },
+      { productId: "carbs-fuel-gel", quantity: 1 },
+    ],
+    "loop-3": [
+      { productId: "skratch-hydration", quantity: 2 },
+      { productId: "skratch-superfuel", quantity: 1 },
+      { productId: "carbs-fuel-gel", quantity: 1 },
+      { productId: "xact-bar", quantity: 1 },
+      { productId: "nerds-clusters", quantity: 1 },
+    ],
+    "loop-4": [
+      { productId: "skratch-hydration", quantity: 2 },
+      { productId: "skratch-superfuel", quantity: 1 },
+      { productId: "neversecond-c30-gel", quantity: 1 },
+      { productId: "carbs-fuel-gel", quantity: 1 },
+      { productId: "nerds-clusters", quantity: 1 },
+    ],
+    "loop-5": [
+      { productId: "skratch-hydration", quantity: 2 },
+      { productId: "skratch-superfuel", quantity: 1 },
+      { productId: "neversecond-c30-gel", quantity: 2 },
+      { productId: "nerds-clusters", quantity: 1 },
+    ],
+  },
   createdAt: "2026-05-02T00:00:00.000Z",
   updatedAt: "2026-05-02T00:00:00.000Z",
 };

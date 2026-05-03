@@ -1,4 +1,4 @@
-import { computeNutrition, type LoopLoadout } from "./nutrition";
+import { loopSpanId, validateLoadout, type LoadoutValidation } from "./nutrition";
 import { computePace, type SegmentPace } from "./pace";
 import type { Plan } from "./types";
 
@@ -17,11 +17,12 @@ export interface SegmentSplit {
 
 export interface LoopSplit {
   loopNumber: number;
+  spanId: string;
   segments: SegmentSplit[];
   loopTimeSec: number;
   cumulativeTimeSec: number;
   finishTimeOfDay: string;
-  loadout: LoopLoadout;
+  loadout: LoadoutValidation;
 }
 
 export interface PlanResult {
@@ -35,7 +36,6 @@ export function buildPlan(plan: Plan): PlanResult {
   const { course, runner, goal } = plan;
 
   const paceResult = computePace(course, runner, goal);
-  const loadouts = computeNutrition(plan, paceResult.loopTimeSec);
 
   const [startHour, startMin] = goal.startTime.split(":").map(Number);
   const startSec = (startHour ?? 0) * 3600 + (startMin ?? 0) * 60;
@@ -46,6 +46,8 @@ export function buildPlan(plan: Plan): PlanResult {
   let cumulativeSec = 0;
 
   for (let i = 0; i < goal.loopCount; i++) {
+    const loopNumber = i + 1;
+    const spanId = loopSpanId(loopNumber);
     const loopSegments = buildLoopSegments(
       paceResult.segmentPaces,
       aidById,
@@ -56,19 +58,30 @@ export function buildPlan(plan: Plan): PlanResult {
     cumulativeSec += paceResult.loopTimeSec;
     const finishTimeOfDay = formatTimeOfDay(startSec + cumulativeSec);
 
+    const items = plan.loadouts[spanId] ?? [];
+    const loadout = validateLoadout(
+      spanId,
+      loopNumber,
+      paceResult.loopTimeSec,
+      items,
+      plan.products,
+      runner
+    );
+
     loops.push({
-      loopNumber: i + 1,
+      loopNumber,
+      spanId,
       segments: loopSegments,
       loopTimeSec: paceResult.loopTimeSec,
       cumulativeTimeSec: cumulativeSec,
       finishTimeOfDay,
-      loadout: loadouts[i] ?? loadouts[loadouts.length - 1],
+      loadout,
     });
   }
 
   const allWarnings = [
     ...paceResult.warnings,
-    ...loadouts.flatMap((l) => l.warnings.map((w) => `Loop ${l.loopNumber}: ${w}`)),
+    ...loops.flatMap((l) => l.loadout.warnings.map((w) => `Loop ${l.loopNumber}: ${w}`)),
   ];
 
   return {

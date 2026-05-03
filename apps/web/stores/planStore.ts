@@ -1,6 +1,15 @@
 "use client";
 
-import type { AidStation, Course, Plan, Product, RaceGoal, RunnerProfile, Segment } from "planner-core";
+import type {
+  AidStation,
+  Course,
+  PackItem,
+  Plan,
+  Product,
+  RaceGoal,
+  RunnerProfile,
+  Segment,
+} from "planner-core";
 import { create } from "zustand";
 import {
   loadActivePlanId,
@@ -8,6 +17,14 @@ import {
   saveActivePlanId,
   savePlans,
 } from "@/lib/storage";
+
+// Migrate plans saved before `loadouts` existed.
+function migratePlan(plan: Plan): Plan {
+  if (!plan.loadouts) {
+    return { ...plan, loadouts: {} };
+  }
+  return plan;
+}
 
 interface PlanStore {
   plans: Record<string, Plan>;
@@ -38,6 +55,9 @@ interface PlanStore {
   updateProduct: (product: Product) => void;
   removeProduct: (id: string) => void;
   setProducts: (products: Product[]) => void;
+
+  // Loadout editing (per-loop pack contents)
+  setLoadout: (spanId: string, items: PackItem[]) => void;
 }
 
 export const usePlanStore = create<PlanStore>((set, get) => ({
@@ -46,7 +66,11 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
   activePlan: null,
 
   initFromStorage: () => {
-    const plans = loadPlans();
+    const rawPlans = loadPlans();
+    const plans: Record<string, Plan> = {};
+    for (const [id, plan] of Object.entries(rawPlans)) {
+      plans[id] = migratePlan(plan);
+    }
     const activePlanId = loadActivePlanId();
     const activePlan = activePlanId ? (plans[activePlanId] ?? null) : null;
     set({ plans, activePlanId, activePlan });
@@ -169,6 +193,21 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
     const plan = get().activePlan;
     if (!plan) return;
     const updated = { ...plan, products, updatedAt: new Date().toISOString() };
+    const plans = { ...get().plans, [plan.id]: updated };
+    savePlans(plans);
+    set({ plans, activePlan: updated });
+  },
+
+  setLoadout: (spanId, items) => {
+    const plan = get().activePlan;
+    if (!plan) return;
+    const loadouts = { ...plan.loadouts };
+    if (items.length === 0) {
+      delete loadouts[spanId];
+    } else {
+      loadouts[spanId] = items;
+    }
+    const updated = { ...plan, loadouts, updatedAt: new Date().toISOString() };
     const plans = { ...get().plans, [plan.id]: updated };
     savePlans(plans);
     set({ plans, activePlan: updated });

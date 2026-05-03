@@ -153,6 +153,42 @@ export const samplePlan: Plan = {
       caffeineMg: 0,
     },
   ],
+  // Sample loadouts: a 1:59 loop needs ~1180mL fluid, ~157g carbs, ~1376mg sodium.
+  // Loops 1–3 use a balanced setup, loops 4–5 add caffeine for the back half.
+  loadouts: {
+    "loop-1": [
+      { productId: "skratch-hydration", quantity: 2 },
+      { productId: "skratch-superfuel", quantity: 1 },
+      { productId: "sis-beta-fuel-gel", quantity: 1 },
+      { productId: "carbs-fuel-gel", quantity: 1 },
+    ],
+    "loop-2": [
+      { productId: "skratch-hydration", quantity: 2 },
+      { productId: "skratch-superfuel", quantity: 1 },
+      { productId: "sis-beta-fuel-gel", quantity: 1 },
+      { productId: "carbs-fuel-gel", quantity: 1 },
+    ],
+    "loop-3": [
+      { productId: "skratch-hydration", quantity: 2 },
+      { productId: "skratch-superfuel", quantity: 1 },
+      { productId: "carbs-fuel-gel", quantity: 1 },
+      { productId: "xact-bar", quantity: 1 },
+      { productId: "nerds-clusters", quantity: 1 },
+    ],
+    "loop-4": [
+      { productId: "skratch-hydration", quantity: 2 },
+      { productId: "skratch-superfuel", quantity: 1 },
+      { productId: "neversecond-c30-gel", quantity: 1 },
+      { productId: "carbs-fuel-gel", quantity: 1 },
+      { productId: "nerds-clusters", quantity: 1 },
+    ],
+    "loop-5": [
+      { productId: "skratch-hydration", quantity: 2 },
+      { productId: "skratch-superfuel", quantity: 1 },
+      { productId: "neversecond-c30-gel", quantity: 2 },
+      { productId: "nerds-clusters", quantity: 1 },
+    ],
+  },
   createdAt: "2026-05-02T00:00:00.000Z",
   updatedAt: "2026-05-02T00:00:00.000Z",
 };

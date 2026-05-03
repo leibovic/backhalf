@@ -56,6 +56,7 @@ export function HomeClient() {
         loopCount: 1,
       },
       products: [],
+      loadouts: {},
       createdAt: now,
       updatedAt: now,
     };

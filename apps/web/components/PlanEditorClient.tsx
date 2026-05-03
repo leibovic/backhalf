@@ -8,6 +8,7 @@ import { NavBar } from "@/components/NavBar";
 import { CourseTab } from "@/components/editor/CourseTab";
 import { RunnerTab } from "@/components/editor/RunnerTab";
 import { GoalTab } from "@/components/editor/GoalTab";
+import { LoadoutsTab } from "@/components/editor/LoadoutsTab";
 import { Button } from "@/components/ui/button";
 
 export function PlanEditorClient() {
@@ -45,6 +46,7 @@ export function PlanEditorClient() {
             <TabsTrigger value="course">Course</TabsTrigger>
             <TabsTrigger value="runner">Runner</TabsTrigger>
             <TabsTrigger value="goal">Goal</TabsTrigger>
+            <TabsTrigger value="loadouts">Loadouts</TabsTrigger>
           </TabsList>
           <TabsContent value="course">
             <CourseTab />
@@ -54,6 +56,9 @@ export function PlanEditorClient() {
           </TabsContent>
           <TabsContent value="goal">
             <GoalTab />
+          </TabsContent>
+          <TabsContent value="loadouts">
+            <LoadoutsTab />
           </TabsContent>
         </Tabs>
       </div>

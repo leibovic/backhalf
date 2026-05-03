@@ -1,154 +1,217 @@
-import type { Plan, Product } from "./types";
+import type { PackItem, Product, RunnerProfile } from "./types";
 
-export interface PackItem {
+export interface ResolvedPackItem {
   product: Product;
   quantity: number;
 }
 
-export interface LoopLoadout {
+export interface NutritionTargets {
+  fluidMl: number;
+  carbsG: number;
+  sodiumMg: number;
+}
+
+export interface NutritionTotals {
+  fluidMl: number;
+  carbsG: number;
+  sodiumMg: number;
+  caffeineMg: number;
+}
+
+export interface LoadoutValidation {
+  spanId: string;
   loopNumber: number;
-  loopDurationSec: number;
-  items: PackItem[];
-  totalFluidMl: number;
-  totalCarbsG: number;
-  totalSodiumMg: number;
-  totalCaffeineMg: number;
-  targetFluidMl: number;
-  targetCarbsG: number;
-  targetSodiumMg: number;
+  spanDurationSec: number;
+  items: ResolvedPackItem[];
+  totals: NutritionTotals;
+  targets: NutritionTargets;
+  // Positive = surplus, negative = deficit.
+  deltas: { fluidMl: number; carbsG: number; sodiumMg: number };
+  packCapacityMl: number;
+  fluidOverCapacityBy: number; // 0 if within capacity, positive if over
+  status: {
+    fluid: TargetStatus;
+    carbs: TargetStatus;
+    sodium: TargetStatus;
+    capacity: "ok" | "over";
+  };
   warnings: string[];
 }
 
-export function computeNutrition(plan: Plan, loopTimeSec: number): LoopLoadout[] {
-  const { runner, goal, products } = plan;
-  const loopDurationHours = loopTimeSec / 3600;
+export type TargetStatus = "deficit" | "ok" | "surplus";
+const TARGET_TOLERANCE = 0.1; // ±10% counts as "ok"
 
-  const targetFluidMl = runner.fluidMlPerHour * loopDurationHours;
-  const targetSodiumMg = runner.sodiumMgPerHour * loopDurationHours;
-  const targetCarbsG = runner.carbsGPerHour * loopDurationHours;
-
-  const loadouts: LoopLoadout[] = [];
-
-  for (let loop = 1; loop <= goal.loopCount; loop++) {
-    const loadout = greedyFill(
-      products,
-      targetFluidMl,
-      targetCarbsG,
-      targetSodiumMg,
-      runner.packCapacityMl,
-      loopTimeSec,
-      loop
-    );
-    loadouts.push(loadout);
-  }
-
-  return loadouts;
+export function targetsForDuration(
+  runner: RunnerProfile,
+  durationSec: number
+): NutritionTargets {
+  const hours = durationSec / 3600;
+  return {
+    fluidMl: runner.fluidMlPerHour * hours,
+    carbsG: runner.carbsGPerHour * hours,
+    sodiumMg: runner.sodiumMgPerHour * hours,
+  };
 }
 
-function greedyFill(
-  products: Product[],
-  targetFluidMl: number,
-  targetCarbsG: number,
-  targetSodiumMg: number,
-  packCapacityMl: number,
-  loopDurationSec: number,
-  loopNumber: number
-): LoopLoadout {
-  const items: Map<string, { product: Product; quantity: number }> = new Map();
-  let fluidMl = 0;
-  let carbsG = 0;
-  let sodiumMg = 0;
-
-  // Greedy: pick product that covers largest remaining shortfall per iteration
-  const MAX_ITERATIONS = 50;
-  for (let i = 0; i < MAX_ITERATIONS; i++) {
-    if (carbsG >= targetCarbsG && sodiumMg >= targetSodiumMg) break;
-
-    let bestProduct: Product | null = null;
-    let bestScore = -1;
-
-    for (const product of products) {
-      // Skip if adding this product would exceed pack fluid capacity
-      if (product.servingFluidMl > 0 && fluidMl + product.servingFluidMl > packCapacityMl) {
-        continue;
-      }
-      // Skip water unless we have remaining fluid capacity and other targets are met
-      if (product.type === "water") continue;
-
-      const carbShortfall = Math.max(0, targetCarbsG - carbsG);
-      const sodiumShortfall = Math.max(0, targetSodiumMg - sodiumMg);
-      const score =
-        (product.carbsG / Math.max(1, carbShortfall)) +
-        (product.sodiumMg / Math.max(1, sodiumShortfall));
-
-      if (score > bestScore) {
-        bestScore = score;
-        bestProduct = product;
-      }
-    }
-
-    if (!bestProduct) break;
-
-    const existing = items.get(bestProduct.id);
-    if (existing) {
-      existing.quantity += 1;
-    } else {
-      items.set(bestProduct.id, { product: bestProduct, quantity: 1 });
-    }
-    fluidMl += bestProduct.servingFluidMl;
-    carbsG += bestProduct.carbsG;
-    sodiumMg += bestProduct.sodiumMg;
-  }
-
-  // Fill remaining fluid capacity with preferred drink mix (first drink_mix)
-  const drinkMix = products.find((p) => p.type === "drink_mix");
-  if (drinkMix) {
-    while (fluidMl + drinkMix.servingFluidMl <= packCapacityMl) {
-      const existing = items.get(drinkMix.id);
-      if (existing) {
-        existing.quantity += 1;
-      } else {
-        items.set(drinkMix.id, { product: drinkMix, quantity: 1 });
-      }
-      fluidMl += drinkMix.servingFluidMl;
-      carbsG += drinkMix.carbsG;
-      sodiumMg += drinkMix.sodiumMg;
+export function resolveItems(items: PackItem[], products: Product[]): ResolvedPackItem[] {
+  const productById = new Map(products.map((p) => [p.id, p]));
+  const resolved: ResolvedPackItem[] = [];
+  for (const item of items) {
+    const product = productById.get(item.productId);
+    if (product && item.quantity > 0) {
+      resolved.push({ product, quantity: item.quantity });
     }
   }
+  return resolved;
+}
 
-  const packItems = Array.from(items.values()).map((v) => ({
-    product: v.product,
-    quantity: v.quantity,
-  }));
-
-  const totalCaffeineMg = packItems.reduce(
-    (sum, item) => sum + item.product.caffeineMg * item.quantity,
-    0
+export function totalsForItems(items: ResolvedPackItem[]): NutritionTotals {
+  return items.reduce(
+    (acc, item) => ({
+      fluidMl: acc.fluidMl + item.product.servingFluidMl * item.quantity,
+      carbsG: acc.carbsG + item.product.carbsG * item.quantity,
+      sodiumMg: acc.sodiumMg + item.product.sodiumMg * item.quantity,
+      caffeineMg: acc.caffeineMg + item.product.caffeineMg * item.quantity,
+    }),
+    { fluidMl: 0, carbsG: 0, sodiumMg: 0, caffeineMg: 0 }
   );
+}
+
+export function validateLoadout(
+  spanId: string,
+  loopNumber: number,
+  spanDurationSec: number,
+  items: PackItem[],
+  products: Product[],
+  runner: RunnerProfile
+): LoadoutValidation {
+  const resolvedItems = resolveItems(items, products);
+  const targets = targetsForDuration(runner, spanDurationSec);
+  const totals = totalsForItems(resolvedItems);
+
+  const deltas = {
+    fluidMl: totals.fluidMl - targets.fluidMl,
+    carbsG: totals.carbsG - targets.carbsG,
+    sodiumMg: totals.sodiumMg - targets.sodiumMg,
+  };
+
+  const fluidOverCapacityBy = Math.max(0, totals.fluidMl - runner.packCapacityMl);
+
+  const status = {
+    fluid: classifyStatus(totals.fluidMl, targets.fluidMl),
+    carbs: classifyStatus(totals.carbsG, targets.carbsG),
+    sodium: classifyStatus(totals.sodiumMg, targets.sodiumMg),
+    capacity: (fluidOverCapacityBy > 0 ? "over" : "ok") as "ok" | "over",
+  };
 
   const warnings: string[] = [];
-  if (targetCarbsG > 0 && carbsG < targetCarbsG * 0.9) {
+  if (resolvedItems.length === 0) {
+    warnings.push("No items planned for this loop.");
+  }
+  if (status.carbs === "deficit") {
     warnings.push(
-      `Carbs: target ${targetCarbsG.toFixed(0)}g, only achieved ${carbsG.toFixed(0)}g (${((carbsG / targetCarbsG) * 100).toFixed(0)}%)`
+      `Carbs ${pctOf(totals.carbsG, targets.carbsG)}% of target (${Math.round(totals.carbsG)}g vs ${Math.round(targets.carbsG)}g).`
     );
   }
-  if (targetSodiumMg > 0 && sodiumMg < targetSodiumMg * 0.9) {
+  if (status.sodium === "deficit") {
     warnings.push(
-      `Sodium: target ${targetSodiumMg.toFixed(0)}mg, only achieved ${sodiumMg.toFixed(0)}mg (${((sodiumMg / targetSodiumMg) * 100).toFixed(0)}%)`
+      `Sodium ${pctOf(totals.sodiumMg, targets.sodiumMg)}% of target (${Math.round(totals.sodiumMg)}mg vs ${Math.round(targets.sodiumMg)}mg).`
+    );
+  }
+  if (status.fluid === "deficit") {
+    warnings.push(
+      `Fluid ${pctOf(totals.fluidMl, targets.fluidMl)}% of target (${Math.round(totals.fluidMl)}mL vs ${Math.round(targets.fluidMl)}mL).`
+    );
+  }
+  if (status.capacity === "over") {
+    warnings.push(
+      `Pack over capacity by ${Math.round(fluidOverCapacityBy)}mL (${Math.round(totals.fluidMl)}mL vs ${runner.packCapacityMl}mL pack).`
     );
   }
 
   return {
+    spanId,
     loopNumber,
-    loopDurationSec,
-    items: packItems,
-    totalFluidMl: fluidMl,
-    totalCarbsG: carbsG,
-    totalSodiumMg: sodiumMg,
-    totalCaffeineMg,
-    targetFluidMl,
-    targetCarbsG,
-    targetSodiumMg,
+    spanDurationSec,
+    items: resolvedItems,
+    totals,
+    targets,
+    deltas,
+    packCapacityMl: runner.packCapacityMl,
+    fluidOverCapacityBy,
+    status,
     warnings,
   };
+}
+
+function classifyStatus(actual: number, target: number): TargetStatus {
+  if (target === 0) return "ok";
+  const ratio = actual / target;
+  if (ratio < 1 - TARGET_TOLERANCE) return "deficit";
+  if (ratio > 1 + TARGET_TOLERANCE) return "surplus";
+  return "ok";
+}
+
+function pctOf(actual: number, target: number): number {
+  if (target === 0) return 100;
+  return Math.round((actual / target) * 100);
+}
+
+// Helper for the "auto-suggest" button in the editor.
+// Greedy: pick highest-density carb-and-sodium product, fill remaining fluid with first drink mix.
+export function suggestLoadout(
+  spanDurationSec: number,
+  runner: RunnerProfile,
+  products: Product[]
+): PackItem[] {
+  const targets = targetsForDuration(runner, spanDurationSec);
+  const itemMap = new Map<string, number>();
+  let fluidMl = 0;
+  let carbsG = 0;
+  let sodiumMg = 0;
+
+  const MAX_ITERATIONS = 50;
+  for (let i = 0; i < MAX_ITERATIONS; i++) {
+    if (carbsG >= targets.carbsG && sodiumMg >= targets.sodiumMg) break;
+
+    let best: Product | null = null;
+    let bestScore = -1;
+
+    for (const product of products) {
+      if (product.type === "water") continue;
+      if (product.servingFluidMl > 0 && fluidMl + product.servingFluidMl > runner.packCapacityMl) {
+        continue;
+      }
+      const carbShortfall = Math.max(0, targets.carbsG - carbsG);
+      const sodiumShortfall = Math.max(0, targets.sodiumMg - sodiumMg);
+      const score =
+        product.carbsG / Math.max(1, carbShortfall) +
+        product.sodiumMg / Math.max(1, sodiumShortfall);
+      if (score > bestScore) {
+        bestScore = score;
+        best = product;
+      }
+    }
+    if (!best) break;
+    itemMap.set(best.id, (itemMap.get(best.id) ?? 0) + 1);
+    fluidMl += best.servingFluidMl;
+    carbsG += best.carbsG;
+    sodiumMg += best.sodiumMg;
+  }
+
+  // Fill remaining fluid capacity with first drink mix
+  const drinkMix = products.find((p) => p.type === "drink_mix");
+  if (drinkMix && drinkMix.servingFluidMl > 0) {
+    while (fluidMl + drinkMix.servingFluidMl <= runner.packCapacityMl) {
+      itemMap.set(drinkMix.id, (itemMap.get(drinkMix.id) ?? 0) + 1);
+      fluidMl += drinkMix.servingFluidMl;
+    }
+  }
+
+  return Array.from(itemMap.entries()).map(([productId, quantity]) => ({ productId, quantity }));
+}
+
+// Loop-course span id helper. For point-to-point this would expand.
+export function loopSpanId(loopNumber: number): string {
+  return `loop-${loopNumber}`;
 }

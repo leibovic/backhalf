@@ -67,12 +67,21 @@ export interface RaceGoal {
   loopCount: number;
 }
 
+export interface PackItem {
+  productId: string;
+  quantity: number;
+}
+
 export interface Plan {
   id: string;
   course: Course;
   runner: RunnerProfile;
   goal: RaceGoal;
   products: Product[]; // products this runner has available
+  // What the runner plans to carry out of each crew/drop-bag aid station.
+  // Keyed by span id. For loop courses, span id = `loop-${N}` (1-indexed).
+  // Empty/missing entry means "I haven't planned this loop yet."
+  loadouts: Record<string, PackItem[]>;
   createdAt: string;
   updatedAt: string;
 }
