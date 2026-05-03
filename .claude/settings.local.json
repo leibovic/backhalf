@@ -37,7 +37,10 @@
       "Bash(tar -xf extracted)",
       "Bash(cp /tmp/design-files/backhalf-app/project/design-system/topo-texture.svg /Users/margaret/Code/backhalf/apps/web/public/design/)",
       "Bash(cp /tmp/design-files/backhalf-app/project/design-system/logo.svg /Users/margaret/Code/backhalf/apps/web/public/design/)",
-      "Bash(cp /tmp/design-files/backhalf-app/project/design-system/logo-mark.svg /Users/margaret/Code/backhalf/apps/web/public/design/)"
+      "Bash(cp /tmp/design-files/backhalf-app/project/design-system/logo-mark.svg /Users/margaret/Code/backhalf/apps/web/public/design/)",
+      "Bash(git push *)",
+      "Bash(git remote *)",
+      "Bash(grep -rn 'href={`\\\\|href={\\\\\\(' apps/web/components apps/web/app)"
     ]
   }
 }

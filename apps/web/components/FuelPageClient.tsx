@@ -22,12 +22,6 @@ function formatDurationHM(sec: number): string {
   return `${h}h ${String(m).padStart(2, "0")}m`;
 }
 
-const STATUS_COLOR: Record<TargetStatus, string> = {
-  ok: "var(--topo-green)",
-  deficit: "var(--topo-ochre)",
-  surplus: "var(--topo-ochre)",
-};
-
 export function FuelPageClient() {
   const router = useRouter();
   const { activePlan, setLoadout } = usePlanStore();
@@ -194,27 +188,27 @@ export function FuelPageClient() {
                           gap: 18,
                         }}
                       >
-                        <NutrientGauge
+                        <NutrientReadout
                           label="Carbs"
                           actual={ld.totals.carbsG}
                           target={ld.targets.carbsG}
                           unit="g"
                           status={ld.status.carbs}
                         />
-                        <NutrientGauge
+                        <NutrientReadout
                           label="Sodium"
                           actual={ld.totals.sodiumMg}
                           target={ld.targets.sodiumMg}
                           unit="mg"
                           status={ld.status.sodium}
                         />
-                        <NutrientGauge
+                        <NutrientReadout
                           label="Fluid"
                           actual={ld.totals.fluidMl}
                           target={ld.targets.fluidMl}
                           unit="mL"
                           status={ld.status.fluid}
-                          warning={
+                          packWarning={
                             ld.status.capacity === "over"
                               ? `over ${ld.packCapacityMl}mL pack`
                               : undefined
@@ -328,105 +322,124 @@ export function FuelPageClient() {
   );
 }
 
-// ── Nutrient gauge bar ──
-function NutrientGauge({
+// ── Nutrient readout: status badge + numbers, no bar ──
+const STATUS_LABEL: Record<TargetStatus, string> = {
+  ok: "On target",
+  deficit: "Below target",
+  surplus: "Above target",
+};
+
+function NutrientReadout({
   label,
   actual,
   target,
   unit,
   status,
-  warning,
+  packWarning,
 }: {
   label: string;
   actual: number;
   target: number;
   unit: string;
   status: TargetStatus;
-  warning?: string;
+  packWarning?: string;
 }) {
-  const pct = target > 0 ? Math.min(150, (actual / target) * 100) : 0;
-  const color = warning ? "var(--danger)" : STATUS_COLOR[status];
+  const pctOfTarget = target > 0 ? Math.round((actual / target) * 100) : 0;
+  const isPackOver = !!packWarning;
+
+  // Pack-over takes precedence over the regular target status for fluid.
+  const effectiveStatus: TargetStatus | "over" = isPackOver ? "over" : status;
+  const palette: Record<typeof effectiveStatus, { color: string; bg: string; label: string }> = {
+    ok: {
+      color: "var(--topo-green)",
+      bg: "var(--topo-green-muted)",
+      label: STATUS_LABEL.ok,
+    },
+    deficit: {
+      color: "var(--topo-ochre)",
+      bg: "var(--topo-ochre-muted)",
+      label: STATUS_LABEL.deficit,
+    },
+    surplus: {
+      color: "var(--topo-ochre)",
+      bg: "var(--topo-ochre-muted)",
+      label: STATUS_LABEL.surplus,
+    },
+    over: {
+      color: "var(--danger)",
+      bg: "var(--danger-muted)",
+      label: "Over pack capacity",
+    },
+  };
+  const p = palette[effectiveStatus];
+
+  // Aria-friendly status sentence the screen reader will hear.
+  const ariaLabel = `${label}: ${p.label}. ${Math.round(actual)} of ${Math.round(target)} ${unit} (${pctOfTarget}% of target)${
+    isPackOver ? `. ${packWarning}.` : "."
+  }`;
+
   return (
-    <div>
+    <div role="group" aria-label={ariaLabel}>
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
+          fontFamily: "var(--font-mono)",
+          fontSize: 10,
+          color: "var(--fg-tertiary)",
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
           marginBottom: 6,
         }}
       >
-        <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 10,
-            color: "var(--fg-tertiary)",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-          }}
-        >
-          {label}
-        </div>
-        <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 11,
-            color: "var(--fg-secondary)",
-          }}
-        >
-          <span style={{ color: "var(--fg-primary)" }}>{Math.round(actual)}</span>
-          <span style={{ color: "var(--fg-tertiary)" }}>
-            {" "}
-            / {Math.round(target)} {unit}
-          </span>
-        </div>
+        {label}
       </div>
+
       <div
         style={{
-          height: 6,
-          background: "var(--bg-inset)",
-          border: "1px solid var(--border)",
-          position: "relative",
+          display: "flex",
+          alignItems: "baseline",
+          gap: 6,
+          marginBottom: 6,
         }}
       >
-        <div
+        <span
           style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: `${Math.min(100, pct)}%`,
-            background: color,
-            transition: "width 200ms ease-out",
-          }}
-        />
-        {pct > 100 && (
-          <div
-            style={{
-              position: "absolute",
-              left: "100%",
-              top: -1,
-              bottom: -1,
-              width: `${Math.min(50, pct - 100)}%`,
-              background: "var(--danger)",
-              opacity: 0.6,
-            }}
-          />
-        )}
-      </div>
-      {warning && (
-        <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 9,
-            color: "var(--danger)",
-            marginTop: 4,
-            letterSpacing: "0.06em",
+            fontFamily: "var(--font-display)",
+            fontSize: 22,
+            color: "var(--fg-primary)",
+            letterSpacing: "0.04em",
+            lineHeight: 1,
           }}
         >
-          {warning}
-        </div>
-      )}
+          {Math.round(actual)}
+        </span>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-tertiary)" }}>
+          / {Math.round(target)} {unit}
+        </span>
+      </div>
+
+      <div
+        aria-hidden="true"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 5,
+          fontFamily: "var(--font-mono)",
+          fontSize: 10,
+          fontWeight: 500,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          padding: "3px 7px",
+          borderRadius: 2,
+          background: p.bg,
+          color: p.color,
+        }}
+      >
+        <span aria-hidden="true">
+          {effectiveStatus === "ok" ? "●" : effectiveStatus === "deficit" ? "▼" : "▲"}
+        </span>
+        <span>{p.label}</span>
+        <span style={{ color: p.color, opacity: 0.7 }}>· {pctOfTarget}%</span>
+      </div>
     </div>
   );
 }
