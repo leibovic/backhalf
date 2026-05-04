@@ -125,7 +125,6 @@ function Sidebar() {
   const totalKm = activePlan
     ? (activePlan.course.loopDistanceM * activePlan.goal.loopCount) / 1000
     : 0;
-  const aidCount = activePlan?.course.aidStations.length ?? 0;
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -294,7 +293,6 @@ function Sidebar() {
           label="Course"
           href="/plan/course"
           active={isActive("/plan/course")}
-          badge={aidCount || undefined}
         />
         <NavItem icon="zap" label="Fuel" href="/plan/fuel" active={isActive("/plan/fuel")} />
 
