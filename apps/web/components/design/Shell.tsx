@@ -290,12 +290,6 @@ function Sidebar() {
         <NavGroupLabel>Plan</NavGroupLabel>
         <NavItem icon="flag" label="Races" href="/" active={isActive("/")} />
         <NavItem
-          icon="edit"
-          label="Editor"
-          href="/plan/editor"
-          active={isActive("/plan/editor")}
-        />
-        <NavItem
           icon="pin"
           label="Course"
           href="/plan/course"

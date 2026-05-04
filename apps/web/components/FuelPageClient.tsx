@@ -11,7 +11,15 @@ import {
 } from "planner-core";
 import { usePlanStore } from "@/stores/planStore";
 import { AppHeader } from "@/components/design/Shell";
-import { Alert, Btn, Card, EmptyState, SectionHeader } from "@/components/design/Primitives";
+import {
+  Alert,
+  Btn,
+  Card,
+  EmptyState,
+  Field,
+  NumberInput,
+  SectionHeader,
+} from "@/components/design/Primitives";
 import { Icon } from "@/components/design/Icon";
 
 function formatDurationHM(sec: number): string {
@@ -24,7 +32,7 @@ function formatDurationHM(sec: number): string {
 
 export function FuelPageClient() {
   const router = useRouter();
-  const { activePlan, setLoadout } = usePlanStore();
+  const { activePlan, setLoadout, updateRunner } = usePlanStore();
 
   const builtPlan = useMemo(() => {
     if (!activePlan) return null;
@@ -84,12 +92,57 @@ export function FuelPageClient() {
             subtitle="Pack what you'll carry through each loop. Targets adapt to loop time and your hourly rates."
           />
 
+          {/* Hourly nutrition targets — drives the per-loop validation below */}
+          <Card style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <Icon name="zap" size={14} color="var(--accent)" />
+              <h5 style={{ margin: 0 }}>Hourly nutrition targets</h5>
+            </div>
+            <div
+              style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}
+            >
+              <Field label="Fluid">
+                <NumberInput
+                  value={activePlan.runner.fluidMlPerHour}
+                  step={50}
+                  min={0}
+                  onChange={(v) =>
+                    updateRunner({ ...activePlan.runner, fluidMlPerHour: v || 0 })
+                  }
+                  suffix="mL/h"
+                />
+              </Field>
+              <Field label="Carbs">
+                <NumberInput
+                  value={activePlan.runner.carbsGPerHour}
+                  step={5}
+                  min={0}
+                  onChange={(v) =>
+                    updateRunner({ ...activePlan.runner, carbsGPerHour: v || 0 })
+                  }
+                  suffix="g/h"
+                />
+              </Field>
+              <Field label="Sodium">
+                <NumberInput
+                  value={activePlan.runner.sodiumMgPerHour}
+                  step={50}
+                  min={0}
+                  onChange={(v) =>
+                    updateRunner({ ...activePlan.runner, sodiumMgPerHour: v || 0 })
+                  }
+                  suffix="mg/h"
+                />
+              </Field>
+            </div>
+          </Card>
+
           {!builtPlan ? (
             <EmptyState
               title="Set up race first"
               body="Add a course and goal time on the editor before planning fuel."
               action={
-                <Btn variant="primary" onClick={() => router.push("/plan/editor")}>
+                <Btn variant="primary" onClick={() => router.push("/plan/course")}>
                   Go to editor
                 </Btn>
               }
@@ -208,11 +261,6 @@ export function FuelPageClient() {
                           target={ld.targets.fluidMl}
                           unit="mL"
                           status={ld.status.fluid}
-                          packWarning={
-                            ld.status.capacity === "over"
-                              ? `over ${ld.packCapacityMl}mL pack`
-                              : undefined
-                          }
                         />
                       </div>
 
@@ -335,21 +383,15 @@ function NutrientReadout({
   target,
   unit,
   status,
-  packWarning,
 }: {
   label: string;
   actual: number;
   target: number;
   unit: string;
   status: TargetStatus;
-  packWarning?: string;
 }) {
   const pctOfTarget = target > 0 ? Math.round((actual / target) * 100) : 0;
-  const isPackOver = !!packWarning;
-
-  // Pack-over takes precedence over the regular target status for fluid.
-  const effectiveStatus: TargetStatus | "over" = isPackOver ? "over" : status;
-  const palette: Record<typeof effectiveStatus, { color: string; bg: string; label: string }> = {
+  const palette: Record<TargetStatus, { color: string; bg: string; label: string }> = {
     ok: {
       color: "var(--topo-green)",
       bg: "var(--topo-green-muted)",
@@ -365,18 +407,11 @@ function NutrientReadout({
       bg: "var(--topo-ochre-muted)",
       label: STATUS_LABEL.surplus,
     },
-    over: {
-      color: "var(--danger)",
-      bg: "var(--danger-muted)",
-      label: "Over pack capacity",
-    },
   };
-  const p = palette[effectiveStatus];
+  const p = palette[status];
 
   // Aria-friendly status sentence the screen reader will hear.
-  const ariaLabel = `${label}: ${p.label}. ${Math.round(actual)} of ${Math.round(target)} ${unit} (${pctOfTarget}% of target)${
-    isPackOver ? `. ${packWarning}.` : "."
-  }`;
+  const ariaLabel = `${label}: ${p.label}. ${Math.round(actual)} of ${Math.round(target)} ${unit} (${pctOfTarget}% of target).`;
 
   return (
     <div role="group" aria-label={ariaLabel}>
@@ -435,7 +470,7 @@ function NutrientReadout({
         }}
       >
         <span aria-hidden="true">
-          {effectiveStatus === "ok" ? "●" : effectiveStatus === "deficit" ? "▼" : "▲"}
+          {status === "ok" ? "●" : status === "deficit" ? "▼" : "▲"}
         </span>
         <span>{p.label}</span>
         <span style={{ color: p.color, opacity: 0.7 }}>· {pctOfTarget}%</span>

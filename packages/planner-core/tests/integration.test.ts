@@ -118,14 +118,6 @@ describe("validateLoadout — math correctness", () => {
     expect(v.status.sodium).toBe("deficit");
   });
 
-  it("flags pack over capacity", () => {
-    // Skratch 500mL × 4 = 2000mL > 1500mL pack
-    const items = [{ productId: "skratch-hydration", quantity: 4 }];
-    const v = validateLoadout("test", 1, oneHourSec, items, products, runner);
-    expect(v.status.capacity).toBe("over");
-    expect(v.fluidOverCapacityBy).toBe(500);
-  });
-
   it("returns 'ok' status when within ±10% of target", () => {
     // 2× SiS Beta = exactly 80g carbs = 100% of target → ok
     const items = [{ productId: "sis-beta-fuel-gel", quantity: 2 }];

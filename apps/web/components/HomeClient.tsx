@@ -43,7 +43,6 @@ function makeNewPlan(): Plan {
       fluidMlPerHour: 600,
       sodiumMgPerHour: 700,
       carbsGPerHour: 80,
-      packCapacityMl: 1500,
     },
     goal: {
       raceId: id,
@@ -70,19 +69,19 @@ export function HomeClient() {
 
   function handleNewPlan() {
     createPlan(makeNewPlan());
-    router.push("/plan/editor");
+    router.push("/plan/course");
   }
 
   function handleLoadExample() {
     const now = new Date().toISOString();
     const id = `plan-${Date.now()}`;
     createPlan({ ...samplePlan, id, createdAt: now, updatedAt: now });
-    router.push("/plan/editor");
+    router.push("/plan/course");
   }
 
   function handleOpen(id: string) {
     setActivePlan(id);
-    router.push("/plan/editor");
+    router.push("/plan/course");
   }
 
   function handleDuplicate(id: string) {

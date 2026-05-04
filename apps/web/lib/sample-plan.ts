@@ -61,7 +61,6 @@ export const samplePlan: Plan = {
     fluidMlPerHour: 600,
     sodiumMgPerHour: 700,
     carbsGPerHour: 80,
-    packCapacityMl: 1500,
   },
   goal: {
     raceId: "sulphur-springs-100k-2026",

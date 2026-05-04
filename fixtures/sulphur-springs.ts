@@ -60,7 +60,6 @@ export const sulphurSpringsRunner: RunnerProfile = {
   fluidMlPerHour: 600,
   sodiumMgPerHour: 700,
   carbsGPerHour: 80,
-  packCapacityMl: 1500,
 };
 
 export const sulphurSprings100kGoal: RaceGoal = {

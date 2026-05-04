@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { AidStation, Segment } from "planner-core";
+import { computePace, type AidStation, type Segment } from "planner-core";
 import { usePlanStore } from "@/stores/planStore";
 import { parseGpx } from "@/lib/gpx";
 import { AppHeader } from "@/components/design/Shell";
@@ -19,10 +19,27 @@ import {
 } from "@/components/design/Primitives";
 import { Icon } from "@/components/design/Icon";
 
+function formatPace(secPerKm: number): string {
+  if (!isFinite(secPerKm)) return "—";
+  const m = Math.floor(secPerKm / 60);
+  const s = Math.round(secPerKm % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 export function CoursePageClient() {
   const router = useRouter();
-  const { activePlan, updateCourse } = usePlanStore();
+  const { activePlan, updateCourse, updateGoal, updateRunner } = usePlanStore();
   const [gpxError, setGpxError] = useState<string | null>(null);
+  const [gpxLoadedName, setGpxLoadedName] = useState<string | null>(null);
+
+  const paceResult = useMemo(() => {
+    if (!activePlan) return null;
+    try {
+      return computePace(activePlan.course, activePlan.runner, activePlan.goal);
+    } catch {
+      return null;
+    }
+  }, [activePlan]);
 
   const profileData = useMemo(() => {
     if (!activePlan) return null;
@@ -62,7 +79,14 @@ export function CoursePageClient() {
     );
   }
 
-  const { course } = activePlan;
+  const { course, goal, runner } = activePlan;
+  const totalDist = course.loopDistanceM * goal.loopCount;
+  const totalGain = course.loopElevationGainM * goal.loopCount;
+
+  const goalH = Math.floor(goal.goalFinishTimeSec / 3600);
+  const goalM = Math.floor((goal.goalFinishTimeSec % 3600) / 60);
+  const setGoalHM = (h: number, m: number) =>
+    updateGoal({ ...goal, goalFinishTimeSec: (h || 0) * 3600 + (m || 0) * 60 });
 
   const updateAid = (idx: number, patch: Partial<AidStation>) => {
     const next = course.aidStations.map((a, i) => (i === idx ? { ...a, ...patch } : a));
@@ -92,9 +116,11 @@ export function CoursePageClient() {
       const result = parseGpx(text, course.id, course.name);
       if (result.error) {
         setGpxError(result.error);
+        setGpxLoadedName(null);
         return;
       }
       setGpxError(null);
+      setGpxLoadedName(file.name);
       updateCourse({
         ...course,
         loopDistanceM: result.course.loopDistanceM,
@@ -143,15 +169,138 @@ export function CoursePageClient() {
     <>
       <AppHeader
         title="Course"
-        subtitle={activePlan.goal.raceName}
+        subtitle={goal.raceName}
         breadcrumbs={["Plan", "Course"]}
       />
       <div className="app-scroll" style={{ flex: 1, overflowY: "auto" }}>
         <div style={{ padding: "24px 28px 60px", maxWidth: 1200, margin: "0 auto" }}>
           <SectionHeader
             title="Course"
-            subtitle={`${course.name} · ${(course.loopDistanceM / 1000).toFixed(1)} km per loop`}
+            subtitle="Upload a GPX, set up your aid stations and segments, and dial in your goal time."
           />
+
+          {/* GPX upload — at the top */}
+          <Card style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <Icon name="upload" size={14} color="var(--accent)" />
+              <h5 style={{ margin: 0 }}>GPX file</h5>
+            </div>
+            <p
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                color: "var(--fg-secondary)",
+                marginBottom: 14,
+                lineHeight: 1.6,
+              }}
+            >
+              Upload a GPX file to auto-fill loop distance and elevation gain/loss. You can
+              still edit the values manually below.
+            </p>
+            <Input type="file" onChange={handleGpxUpload} />
+            {gpxLoadedName && !gpxError && (
+              <div style={{ marginTop: 10 }}>
+                <Alert>Loaded {gpxLoadedName}.</Alert>
+              </div>
+            )}
+            {gpxError && (
+              <div style={{ marginTop: 10 }}>
+                <Alert variant="danger">{gpxError}</Alert>
+              </div>
+            )}
+          </Card>
+
+          {/* Race + Course details side by side */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 16,
+              alignItems: "start",
+              marginBottom: 16,
+            }}
+          >
+            {/* Race info */}
+            <Card>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <Icon name="flag" size={14} color="var(--accent)" />
+                <h5 style={{ margin: 0 }}>Race</h5>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <Field label="Race name">
+                  <Input
+                    value={goal.raceName}
+                    onChange={(e) => updateGoal({ ...goal, raceName: e.target.value })}
+                  />
+                </Field>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <Field label="Race date">
+                    <Input
+                      type="date"
+                      value={goal.raceDate}
+                      onChange={(e) => updateGoal({ ...goal, raceDate: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Start time">
+                    <Input
+                      type="time"
+                      value={goal.startTime}
+                      onChange={(e) => updateGoal({ ...goal, startTime: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                <Field label="Loop count" hint="Number of times you complete the loop course.">
+                  <NumberInput
+                    value={goal.loopCount}
+                    min={1}
+                    step={1}
+                    onChange={(v) => updateGoal({ ...goal, loopCount: Math.max(1, v || 1) })}
+                    suffix="loops"
+                  />
+                </Field>
+              </div>
+            </Card>
+
+            {/* Course details */}
+            <Card>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <Icon name="pin" size={14} color="var(--accent)" />
+                <h5 style={{ margin: 0 }}>Course details</h5>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <Field label="Course name">
+                  <Input
+                    value={course.name}
+                    onChange={(e) => updateCourse({ ...course, name: e.target.value })}
+                  />
+                </Field>
+                <Field label="Loop distance">
+                  <NumberInput
+                    value={+(course.loopDistanceM / 1000).toFixed(2)}
+                    step={0.1}
+                    onChange={(v) => updateCourse({ ...course, loopDistanceM: v * 1000 })}
+                    suffix="km"
+                  />
+                </Field>
+                <Field label="Elevation gain / loss per loop">
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <NumberInput
+                      value={Math.round(course.loopElevationGainM)}
+                      step={5}
+                      onChange={(v) => updateCourse({ ...course, loopElevationGainM: v })}
+                      suffix="+m"
+                    />
+                    <NumberInput
+                      value={Math.round(course.loopElevationLossM)}
+                      step={5}
+                      onChange={(v) => updateCourse({ ...course, loopElevationLossM: v })}
+                      suffix="-m"
+                    />
+                  </div>
+                </Field>
+              </div>
+            </Card>
+          </div>
 
           {/* Profile */}
           <Card style={{ marginBottom: 16 }}>
@@ -296,54 +445,6 @@ export function CoursePageClient() {
             )}
           </Card>
 
-          {/* GPX upload */}
-          <Card style={{ marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-              <Icon name="upload" size={14} color="var(--accent)" />
-              <h5 style={{ margin: 0 }}>Course details</h5>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <Field label="Course name">
-                <Input
-                  value={course.name}
-                  onChange={(e) => updateCourse({ ...course, name: e.target.value })}
-                />
-              </Field>
-              <Field label="Upload GPX (auto-fills distance & elevation)">
-                <Input type="file" onChange={handleGpxUpload} />
-              </Field>
-              <Field label="Loop distance (km)">
-                <NumberInput
-                  value={+(course.loopDistanceM / 1000).toFixed(2)}
-                  step={0.1}
-                  onChange={(v) => updateCourse({ ...course, loopDistanceM: v * 1000 })}
-                  suffix="km"
-                />
-              </Field>
-              <Field label="Elevation gain / loss per loop">
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <NumberInput
-                    value={Math.round(course.loopElevationGainM)}
-                    step={5}
-                    onChange={(v) => updateCourse({ ...course, loopElevationGainM: v })}
-                    suffix="+m"
-                  />
-                  <NumberInput
-                    value={Math.round(course.loopElevationLossM)}
-                    step={5}
-                    onChange={(v) => updateCourse({ ...course, loopElevationLossM: v })}
-                    suffix="-m"
-                  />
-                </div>
-              </Field>
-            </div>
-            {gpxError && (
-              <div style={{ marginTop: 12 }}>
-                <Alert variant="danger">{gpxError}</Alert>
-              </div>
-            )}
-          </Card>
-
           {/* Aid stations */}
           <Card style={{ marginBottom: 16 }}>
             <div
@@ -467,7 +568,7 @@ export function CoursePageClient() {
 
           {/* Segments */}
           {course.segments.length > 0 && (
-            <Card>
+            <Card style={{ marginBottom: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                 <Icon name="activity" size={14} color="var(--accent)" />
                 <h5 style={{ margin: 0 }}>Segments between stations</h5>
@@ -538,6 +639,122 @@ export function CoursePageClient() {
               </div>
             </Card>
           )}
+
+          {/* Goal time + pace model */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 16,
+              alignItems: "start",
+            }}
+          >
+            {/* Goal time */}
+            <Card>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <Icon name="activity" size={14} color="var(--accent)" />
+                <h5 style={{ margin: 0 }}>Goal finish time</h5>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <Field label="Hours">
+                  <NumberInput
+                    value={goalH}
+                    min={0}
+                    max={48}
+                    step={1}
+                    onChange={(v) => setGoalHM(v, goalM)}
+                    suffix="h"
+                  />
+                </Field>
+                <Field label="Minutes">
+                  <NumberInput
+                    value={goalM}
+                    min={0}
+                    max={59}
+                    step={1}
+                    onChange={(v) => setGoalHM(goalH, v)}
+                    suffix="m"
+                  />
+                </Field>
+              </div>
+
+              <div
+                style={{
+                  marginTop: 18,
+                  padding: "14px 0 0",
+                  borderTop: "1px solid var(--border)",
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr",
+                  gap: 10,
+                }}
+              >
+                <Stat label="Total" value={(totalDist / 1000).toFixed(1)} unit="km" />
+                <Stat label="Climb" value={Math.round(totalGain)} unit="m" />
+                <Stat
+                  label="Flat pace"
+                  accent
+                  value={paceResult ? formatPace(paceResult.baselinePaceSecPerKm) : "—"}
+                  unit="/km"
+                />
+              </div>
+              {paceResult && paceResult.warnings.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  <Alert variant="warning">{paceResult.warnings[0]}</Alert>
+                </div>
+              )}
+            </Card>
+
+            {/* Climb / descent cost */}
+            <Card>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <Icon name="mountain" size={14} color="var(--accent)" />
+                <h5 style={{ margin: 0 }}>Climb / descent cost</h5>
+              </div>
+              <p
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 12,
+                  color: "var(--fg-secondary)",
+                  marginBottom: 14,
+                  lineHeight: 1.6,
+                }}
+              >
+                How much each meter of vertical changes your pace. Climbing adds time; descending
+                takes a little back.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <Field label="Climb cost" hint="1 flat road · 2 rolling · 4 steep · 6 power-hike">
+                  <NumberInput
+                    value={runner.secPerMeterClimb}
+                    step={0.5}
+                    min={0}
+                    onChange={(v) => updateRunner({ ...runner, secPerMeterClimb: v || 0 })}
+                    suffix="s/m"
+                  />
+                </Field>
+                <Field label="Descent gain" hint="0 technical · 1 runnable · 2 smooth fast">
+                  <NumberInput
+                    value={runner.secPerMeterDescent}
+                    step={0.5}
+                    min={0}
+                    onChange={(v) => updateRunner({ ...runner, secPerMeterDescent: v || 0 })}
+                    suffix="s/m"
+                  />
+                </Field>
+              </div>
+            </Card>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "flex-end" }}>
+            <Btn variant="secondary" onClick={() => router.push("/plan/fuel")}>
+              Plan fuel
+              <Icon name="chevronRight" size={11} />
+            </Btn>
+            <Btn variant="primary" onClick={() => router.push("/plan/race-plan")}>
+              See race plan
+              <Icon name="chevronRight" size={11} color="#fff" />
+            </Btn>
+          </div>
         </div>
       </div>
     </>

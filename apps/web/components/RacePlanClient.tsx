@@ -82,7 +82,7 @@ export function RacePlanClient() {
           title="Not enough info"
           body="Add a course and runner profile to generate the race plan."
           action={
-            <Btn variant="primary" onClick={() => router.push("/plan/editor")}>
+            <Btn variant="primary" onClick={() => router.push("/plan/course")}>
               Open editor
             </Btn>
           }
@@ -533,14 +533,12 @@ export function RacePlanClient() {
                         <span
                           style={{
                             color:
-                              ld.status.capacity === "over"
-                                ? "var(--danger)"
-                                : ld.status.fluid === "ok"
-                                  ? "var(--topo-green)"
-                                  : "var(--topo-ochre)",
+                              ld.status.fluid === "ok"
+                                ? "var(--topo-green)"
+                                : "var(--topo-ochre)",
                           }}
                         >
-                          {Math.round(ld.totals.fluidMl)}mL
+                          {Math.round(ld.totals.fluidMl)}mL/{Math.round(ld.targets.fluidMl)}
                         </span>
                       </div>
                     </div>

@@ -27,13 +27,10 @@ export interface LoadoutValidation {
   targets: NutritionTargets;
   // Positive = surplus, negative = deficit.
   deltas: { fluidMl: number; carbsG: number; sodiumMg: number };
-  packCapacityMl: number;
-  fluidOverCapacityBy: number; // 0 if within capacity, positive if over
   status: {
     fluid: TargetStatus;
     carbs: TargetStatus;
     sodium: TargetStatus;
-    capacity: "ok" | "over";
   };
   warnings: string[];
 }
@@ -95,13 +92,10 @@ export function validateLoadout(
     sodiumMg: totals.sodiumMg - targets.sodiumMg,
   };
 
-  const fluidOverCapacityBy = Math.max(0, totals.fluidMl - runner.packCapacityMl);
-
   const status = {
     fluid: classifyStatus(totals.fluidMl, targets.fluidMl),
     carbs: classifyStatus(totals.carbsG, targets.carbsG),
     sodium: classifyStatus(totals.sodiumMg, targets.sodiumMg),
-    capacity: (fluidOverCapacityBy > 0 ? "over" : "ok") as "ok" | "over",
   };
 
   const warnings: string[] = [];
@@ -123,11 +117,6 @@ export function validateLoadout(
       `Fluid ${pctOf(totals.fluidMl, targets.fluidMl)}% of target (${Math.round(totals.fluidMl)}mL vs ${Math.round(targets.fluidMl)}mL).`
     );
   }
-  if (status.capacity === "over") {
-    warnings.push(
-      `Pack over capacity by ${Math.round(fluidOverCapacityBy)}mL (${Math.round(totals.fluidMl)}mL vs ${runner.packCapacityMl}mL pack).`
-    );
-  }
 
   return {
     spanId,
@@ -137,8 +126,6 @@ export function validateLoadout(
     totals,
     targets,
     deltas,
-    packCapacityMl: runner.packCapacityMl,
-    fluidOverCapacityBy,
     status,
     warnings,
   };
@@ -158,7 +145,7 @@ function pctOf(actual: number, target: number): number {
 }
 
 // Helper for the "auto-suggest" button in the editor.
-// Greedy: pick highest-density carb-and-sodium product, fill remaining fluid with first drink mix.
+// Greedy: pick highest-density carb-and-sodium product first, then top up fluid with drink mix.
 export function suggestLoadout(
   spanDurationSec: number,
   runner: RunnerProfile,
@@ -179,9 +166,6 @@ export function suggestLoadout(
 
     for (const product of products) {
       if (product.type === "water") continue;
-      if (product.servingFluidMl > 0 && fluidMl + product.servingFluidMl > runner.packCapacityMl) {
-        continue;
-      }
       const carbShortfall = Math.max(0, targets.carbsG - carbsG);
       const sodiumShortfall = Math.max(0, targets.sodiumMg - sodiumMg);
       const score =
@@ -199,10 +183,10 @@ export function suggestLoadout(
     sodiumMg += best.sodiumMg;
   }
 
-  // Fill remaining fluid capacity with first drink mix
+  // Top up remaining fluid with first drink mix until target is hit.
   const drinkMix = products.find((p) => p.type === "drink_mix");
   if (drinkMix && drinkMix.servingFluidMl > 0) {
-    while (fluidMl + drinkMix.servingFluidMl <= runner.packCapacityMl) {
+    while (fluidMl < targets.fluidMl) {
       itemMap.set(drinkMix.id, (itemMap.get(drinkMix.id) ?? 0) + 1);
       fluidMl += drinkMix.servingFluidMl;
     }

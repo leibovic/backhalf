@@ -56,8 +56,6 @@ export interface RunnerProfile {
   fluidMlPerHour: number;
   sodiumMgPerHour: number;
   carbsGPerHour: number;
-  // Pack capacity (single loop)
-  packCapacityMl: number;
 }
 
 export interface RaceGoal {
