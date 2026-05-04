@@ -4,7 +4,6 @@
 
 export interface Course {
   id: string;
-  name: string;
   loopDistanceM: number;
   loopElevationGainM: number;
   loopElevationLossM: number;

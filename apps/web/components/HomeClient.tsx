@@ -28,7 +28,6 @@ function makeNewPlan(): Plan {
     id,
     course: {
       id: `course-${Date.now()}`,
-      name: "My Course",
       loopDistanceM: 0,
       loopElevationGainM: 0,
       loopElevationLossM: 0,

@@ -4,7 +4,6 @@ export const samplePlan: Plan = {
   id: "sulphur-springs-100k-2026-default",
   course: {
     id: "sulphur-springs-20k-loop",
-    name: "Sulphur Springs 20K Loop",
     loopDistanceM: 20000,
     loopElevationGainM: 365,
     loopElevationLossM: 365,

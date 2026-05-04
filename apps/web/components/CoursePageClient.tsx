@@ -113,7 +113,7 @@ export function CoursePageClient() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
-      const result = parseGpx(text, course.id, course.name);
+      const result = parseGpx(text, course.id);
       if (result.error) {
         setGpxError(result.error);
         setGpxLoadedName(null);
@@ -210,46 +210,35 @@ export function CoursePageClient() {
             )}
           </Card>
 
-          {/* Race + Course details side by side */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 16,
-              alignItems: "start",
-              marginBottom: 16,
-            }}
-          >
-            {/* Race info */}
-            <Card>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <Icon name="flag" size={14} color="var(--accent)" />
-                <h5 style={{ margin: 0 }}>Race</h5>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <Field label="Race name">
+          {/* Race details — combined */}
+          <Card style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <Icon name="flag" size={14} color="var(--accent)" />
+              <h5 style={{ margin: 0 }}>Race details</h5>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <Field label="Race name">
+                <Input
+                  value={goal.raceName}
+                  onChange={(e) => updateGoal({ ...goal, raceName: e.target.value })}
+                />
+              </Field>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                <Field label="Race date">
                   <Input
-                    value={goal.raceName}
-                    onChange={(e) => updateGoal({ ...goal, raceName: e.target.value })}
+                    type="date"
+                    value={goal.raceDate}
+                    onChange={(e) => updateGoal({ ...goal, raceDate: e.target.value })}
                   />
                 </Field>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <Field label="Race date">
-                    <Input
-                      type="date"
-                      value={goal.raceDate}
-                      onChange={(e) => updateGoal({ ...goal, raceDate: e.target.value })}
-                    />
-                  </Field>
-                  <Field label="Start time">
-                    <Input
-                      type="time"
-                      value={goal.startTime}
-                      onChange={(e) => updateGoal({ ...goal, startTime: e.target.value })}
-                    />
-                  </Field>
-                </div>
-                <Field label="Loop count" hint="Number of times you complete the loop course.">
+                <Field label="Start time">
+                  <Input
+                    type="time"
+                    value={goal.startTime}
+                    onChange={(e) => updateGoal({ ...goal, startTime: e.target.value })}
+                  />
+                </Field>
+                <Field label="Loop count" hint="Number of times you run the loop.">
                   <NumberInput
                     value={goal.loopCount}
                     min={1}
@@ -259,21 +248,7 @@ export function CoursePageClient() {
                   />
                 </Field>
               </div>
-            </Card>
-
-            {/* Course details */}
-            <Card>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <Icon name="pin" size={14} color="var(--accent)" />
-                <h5 style={{ margin: 0 }}>Course details</h5>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <Field label="Course name">
-                  <Input
-                    value={course.name}
-                    onChange={(e) => updateCourse({ ...course, name: e.target.value })}
-                  />
-                </Field>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
                 <Field label="Loop distance">
                   <NumberInput
                     value={+(course.loopDistanceM / 1000).toFixed(2)}
@@ -282,25 +257,25 @@ export function CoursePageClient() {
                     suffix="km"
                   />
                 </Field>
-                <Field label="Elevation gain / loss per loop">
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                    <NumberInput
-                      value={Math.round(course.loopElevationGainM)}
-                      step={5}
-                      onChange={(v) => updateCourse({ ...course, loopElevationGainM: v })}
-                      suffix="+m"
-                    />
-                    <NumberInput
-                      value={Math.round(course.loopElevationLossM)}
-                      step={5}
-                      onChange={(v) => updateCourse({ ...course, loopElevationLossM: v })}
-                      suffix="-m"
-                    />
-                  </div>
+                <Field label="Elevation gain / loop">
+                  <NumberInput
+                    value={Math.round(course.loopElevationGainM)}
+                    step={5}
+                    onChange={(v) => updateCourse({ ...course, loopElevationGainM: v })}
+                    suffix="+m"
+                  />
+                </Field>
+                <Field label="Elevation loss / loop">
+                  <NumberInput
+                    value={Math.round(course.loopElevationLossM)}
+                    step={5}
+                    onChange={(v) => updateCourse({ ...course, loopElevationLossM: v })}
+                    suffix="-m"
+                  />
                 </Field>
               </div>
-            </Card>
-          </div>
+            </div>
+          </Card>
 
           {/* Profile */}
           <Card style={{ marginBottom: 16 }}>

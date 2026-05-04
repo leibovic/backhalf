@@ -25,14 +25,14 @@ function haversineM(lat1: number, lon1: number, lat2: number, lon2: number): num
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function parseGpx(xmlText: string, courseId: string, courseName: string): ParsedGpx {
+export function parseGpx(xmlText: string, courseId: string): ParsedGpx {
   const parser = new DOMParser();
   const doc = parser.parseFromString(xmlText, "application/xml");
 
   const parseError = doc.querySelector("parsererror");
   if (parseError) {
     return {
-      course: emptyCourse(courseId, courseName),
+      course: emptyCourse(courseId),
       elevationProfile: [],
       error: "Invalid GPX file",
     };
@@ -41,7 +41,7 @@ export function parseGpx(xmlText: string, courseId: string, courseName: string):
   const trkpts = Array.from(doc.querySelectorAll("trkpt"));
   if (trkpts.length === 0) {
     return {
-      course: emptyCourse(courseId, courseName),
+      course: emptyCourse(courseId),
       elevationProfile: [],
       error: "No track points found in GPX file",
     };
@@ -107,7 +107,6 @@ export function parseGpx(xmlText: string, courseId: string, courseName: string):
 
   const course: Course = {
     id: courseId,
-    name: courseName,
     loopDistanceM: totalDistanceM,
     loopElevationGainM: totalGainM,
     loopElevationLossM: totalLossM,
@@ -118,10 +117,9 @@ export function parseGpx(xmlText: string, courseId: string, courseName: string):
   return { course, elevationProfile };
 }
 
-function emptyCourse(id: string, name: string): Course {
+function emptyCourse(id: string): Course {
   return {
     id,
-    name,
     loopDistanceM: 0,
     loopElevationGainM: 0,
     loopElevationLossM: 0,
