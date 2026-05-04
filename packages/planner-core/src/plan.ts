@@ -1,6 +1,6 @@
 import { loopSpanId, validateLoadout, type LoadoutValidation } from "./nutrition";
 import { computePace, type SegmentPace } from "./pace";
-import type { Plan } from "./types";
+import type { Plan, Product } from "./types";
 
 export interface SegmentSplit {
   fromAidId: string;
@@ -32,7 +32,7 @@ export interface PlanResult {
   warnings: string[];
 }
 
-export function buildPlan(plan: Plan): PlanResult {
+export function buildPlan(plan: Plan, products: Product[]): PlanResult {
   const { course, runner, goal } = plan;
 
   const paceResult = computePace(course, runner, goal);
@@ -64,7 +64,7 @@ export function buildPlan(plan: Plan): PlanResult {
       loopNumber,
       paceResult.loopTimeSec,
       items,
-      plan.products,
+      products,
       runner
     );
 

@@ -32,16 +32,16 @@ function formatDurationHM(sec: number): string {
 
 export function FuelPageClient() {
   const router = useRouter();
-  const { activePlan, setLoadout, updateRunner } = usePlanStore();
+  const { activePlan, products, setLoadout, updateRunner } = usePlanStore();
 
   const builtPlan = useMemo(() => {
     if (!activePlan) return null;
     try {
-      return buildPlan(activePlan);
+      return buildPlan(activePlan, products);
     } catch {
       return null;
     }
-  }, [activePlan]);
+  }, [activePlan, products]);
 
   if (!activePlan) {
     return (
@@ -74,7 +74,7 @@ export function FuelPageClient() {
 
   function autoSuggest(spanId: string, durationSec: number) {
     if (!activePlan) return;
-    const next = suggestLoadout(durationSec, activePlan.runner, activePlan.products);
+    const next = suggestLoadout(durationSec, activePlan.runner, products);
     setLoadout(spanId, next);
   }
 
@@ -147,7 +147,7 @@ export function FuelPageClient() {
                 </Btn>
               }
             />
-          ) : activePlan.products.length === 0 ? (
+          ) : products.length === 0 ? (
             <EmptyState
               title="No products"
               body="Add nutrition products to your library before planning fuel."
@@ -273,7 +273,7 @@ export function FuelPageClient() {
                             gap: 8,
                           }}
                         >
-                          {activePlan.products
+                          {products
                             .filter((p) => p.type !== "water")
                             .map((p) => {
                               const item = items.find((i) => i.productId === p.id);

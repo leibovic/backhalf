@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import type { Product } from "planner-core";
 import { usePlanStore } from "@/stores/planStore";
 import { AppHeader } from "@/components/design/Shell";
@@ -34,24 +33,7 @@ const TYPE_LABELS: Record<Product["type"], string> = {
 };
 
 export function ProductsClient() {
-  const router = useRouter();
-  const { activePlan, addProduct, updateProduct, removeProduct } = usePlanStore();
-
-  if (!activePlan) {
-    return (
-      <>
-        <AppHeader title="Products" breadcrumbs={["Library", "Products"]} />
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ textAlign: "center", color: "var(--fg-secondary)" }}>
-            <p style={{ marginBottom: 16 }}>No race plan selected.</p>
-            <Btn variant="primary" onClick={() => router.push("/")}>
-              Go to Races
-            </Btn>
-          </div>
-        </div>
-      </>
-    );
-  }
+  const { products, addProduct, updateProduct, removeProduct } = usePlanStore();
 
   function handleAdd() {
     const id = `custom-${Date.now()}`;
@@ -94,7 +76,7 @@ export function ProductsClient() {
     <>
       <AppHeader
         title="Products"
-        subtitle={activePlan.goal.raceName}
+        subtitle="Shared across all your race plans"
         breadcrumbs={["Library", "Products"]}
       />
       <div className="app-scroll" style={{ flex: 1, overflowY: "auto" }}>
@@ -144,7 +126,7 @@ export function ProductsClient() {
                   </tr>
                 </thead>
                 <tbody>
-                  {activePlan.products.map((p) => (
+                  {products.map((p) => (
                     <tr key={p.id} style={{ borderBottom: "1px solid var(--border)" }}>
                       <td style={{ padding: "8px 12px", minWidth: 200 }}>
                         <Input

@@ -43,16 +43,16 @@ function formatPace(secPerKm: number): string {
 
 export function RacePlanClient() {
   const router = useRouter();
-  const { activePlan } = usePlanStore();
+  const { activePlan, products } = usePlanStore();
 
   const built = useMemo(() => {
     if (!activePlan) return null;
     try {
-      return buildPlan(activePlan);
+      return buildPlan(activePlan, products);
     } catch {
       return null;
     }
-  }, [activePlan]);
+  }, [activePlan, products]);
 
   if (!activePlan) {
     return (

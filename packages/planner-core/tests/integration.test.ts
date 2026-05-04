@@ -46,7 +46,7 @@ describe("Sulphur Springs 100K pace model", () => {
 });
 
 describe("Sulphur Springs 100K full plan", () => {
-  const planResult = buildPlan(sulphurSprings100kPlan);
+  const planResult = buildPlan(sulphurSprings100kPlan, sulphurSpringsProducts);
 
   it("total finish time within 60 seconds of goal (9:55:00)", () => {
     const goalSec = sulphurSprings100kGoal.goalFinishTimeSec;

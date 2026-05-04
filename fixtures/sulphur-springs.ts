@@ -168,7 +168,6 @@ export const sulphurSprings100kPlan: Plan = {
   course: sulphurSpringsCourse,
   runner: sulphurSpringsRunner,
   goal: sulphurSprings100kGoal,
-  products: sulphurSpringsProducts,
   loadouts: {
     "loop-1": [
       { productId: "skratch-hydration", quantity: 2 },

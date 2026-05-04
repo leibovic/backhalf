@@ -1,7 +1,8 @@
-import type { Plan } from "planner-core";
+import type { Plan, Product } from "planner-core";
 
 const PLANS_KEY = "backhalf.plans";
 const ACTIVE_PLAN_KEY = "backhalf.activePlanId";
+const PRODUCTS_KEY = "backhalf.products";
 
 export function loadPlans(): Record<string, Plan> {
   if (typeof window === "undefined") return {};
@@ -32,6 +33,24 @@ export function saveActivePlanId(id: string | null): void {
   }
 }
 
+// Returns null when the key has never been written (first-time install),
+// distinguishable from [] which means the user intentionally emptied the library.
+export function loadProducts(): Product[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(PRODUCTS_KEY);
+    if (raw === null) return null;
+    return JSON.parse(raw) as Product[];
+  } catch {
+    return null;
+  }
+}
+
+export function saveProducts(products: Product[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+}
+
 export function exportPlans(): void {
   const plans = loadPlans();
   const json = JSON.stringify(plans, null, 2);
@@ -49,6 +68,8 @@ export function importPlans(json: string): void {
   savePlans(parsed);
 }
 
+// Clears plans and active-plan selection. The product library is preserved —
+// it's a shared library that's expensive to rebuild and not race-specific.
 export function clearAllData(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(PLANS_KEY);

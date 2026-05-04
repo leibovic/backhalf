@@ -14,22 +14,32 @@ import { create } from "zustand";
 import {
   loadActivePlanId,
   loadPlans,
+  loadProducts,
   saveActivePlanId,
   savePlans,
+  saveProducts,
 } from "@/lib/storage";
+import { samplePlanProducts } from "@/lib/sample-plan";
 
-// Migrate plans saved before `loadouts` existed.
-function migratePlan(plan: Plan): Plan {
-  if (!plan.loadouts) {
-    return { ...plan, loadouts: {} };
+function migratePlan(raw: Plan & { products?: Product[] }): { plan: Plan; orphanedProducts: Product[] } {
+  const orphanedProducts: Product[] = [];
+  // If an old plan had products embedded, extract them for migration to global store
+  if (raw.products && Array.isArray(raw.products) && raw.products.length > 0) {
+    orphanedProducts.push(...raw.products);
   }
-  return plan;
+  const { products: _removed, ...plan } = raw as Plan & { products?: Product[] };
+  void _removed;
+  if (!plan.loadouts) {
+    return { plan: { ...plan, loadouts: {} }, orphanedProducts };
+  }
+  return { plan, orphanedProducts };
 }
 
 interface PlanStore {
   plans: Record<string, Plan>;
   activePlanId: string | null;
   activePlan: Plan | null;
+  products: Product[];
 
   // Lifecycle
   initFromStorage: () => void;
@@ -50,7 +60,7 @@ interface PlanStore {
   // Goal editing
   updateGoal: (goal: RaceGoal) => void;
 
-  // Products editing
+  // Global products library
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
   removeProduct: (id: string) => void;
@@ -64,16 +74,45 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
   plans: {},
   activePlanId: null,
   activePlan: null,
+  products: [],
 
   initFromStorage: () => {
-    const rawPlans = loadPlans();
+    const rawPlans = loadPlans() as Record<string, Plan & { products?: Product[] }>;
     const plans: Record<string, Plan> = {};
-    for (const [id, plan] of Object.entries(rawPlans)) {
-      plans[id] = migratePlan(plan);
+    const migratedProducts: Product[] = [];
+
+    for (const [id, raw] of Object.entries(rawPlans)) {
+      const { plan, orphanedProducts } = migratePlan(raw);
+      plans[id] = plan;
+      for (const p of orphanedProducts) {
+        if (!migratedProducts.find((x) => x.id === p.id)) {
+          migratedProducts.push(p);
+        }
+      }
     }
+
+    const storedProducts = loadProducts(); // null = key never written (first install)
+    let products: Product[];
+
+    if (storedProducts !== null) {
+      // Key exists: user-managed library (may be empty if they deleted everything)
+      products = storedProducts;
+      // Still strip any embedded products from plans in storage
+      if (migratedProducts.length > 0) savePlans(plans);
+    } else if (migratedProducts.length > 0) {
+      // First load after migrating from per-plan products → use what was in the plans
+      products = migratedProducts;
+      saveProducts(products);
+      savePlans(plans);
+    } else {
+      // Truly first install with no prior data → seed with common products
+      products = samplePlanProducts;
+      saveProducts(products);
+    }
+
     const activePlanId = loadActivePlanId();
     const activePlan = activePlanId ? (plans[activePlanId] ?? null) : null;
-    set({ plans, activePlanId, activePlan });
+    set({ plans, activePlanId, activePlan, products });
   },
 
   createPlan: (plan) => {
@@ -160,42 +199,26 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
   },
 
   addProduct: (product) => {
-    const plan = get().activePlan;
-    if (!plan) return;
-    const products = [...plan.products, product];
-    const updated = { ...plan, products, updatedAt: new Date().toISOString() };
-    const plans = { ...get().plans, [plan.id]: updated };
-    savePlans(plans);
-    set({ plans, activePlan: updated });
+    const products = [...get().products, product];
+    saveProducts(products);
+    set({ products });
   },
 
   updateProduct: (product) => {
-    const plan = get().activePlan;
-    if (!plan) return;
-    const products = plan.products.map((p) => (p.id === product.id ? product : p));
-    const updated = { ...plan, products, updatedAt: new Date().toISOString() };
-    const plans = { ...get().plans, [plan.id]: updated };
-    savePlans(plans);
-    set({ plans, activePlan: updated });
+    const products = get().products.map((p) => (p.id === product.id ? product : p));
+    saveProducts(products);
+    set({ products });
   },
 
   removeProduct: (id) => {
-    const plan = get().activePlan;
-    if (!plan) return;
-    const products = plan.products.filter((p) => p.id !== id);
-    const updated = { ...plan, products, updatedAt: new Date().toISOString() };
-    const plans = { ...get().plans, [plan.id]: updated };
-    savePlans(plans);
-    set({ plans, activePlan: updated });
+    const products = get().products.filter((p) => p.id !== id);
+    saveProducts(products);
+    set({ products });
   },
 
   setProducts: (products) => {
-    const plan = get().activePlan;
-    if (!plan) return;
-    const updated = { ...plan, products, updatedAt: new Date().toISOString() };
-    const plans = { ...get().plans, [plan.id]: updated };
-    savePlans(plans);
-    set({ plans, activePlan: updated });
+    saveProducts(products);
+    set({ products });
   },
 
   setLoadout: (spanId, items) => {

@@ -51,7 +51,6 @@ function makeNewPlan(): Plan {
       goalFinishTimeSec: 36000,
       loopCount: 1,
     },
-    products: [],
     loadouts: {},
     createdAt: now,
     updatedAt: now,
